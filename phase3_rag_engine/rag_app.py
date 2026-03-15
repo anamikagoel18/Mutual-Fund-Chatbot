@@ -80,9 +80,10 @@ class MutualFundRAG:
         Strict Instructions:
         1. Answer ONLY the specific attribute asked in the question (e.g., expense ratio, exit load, AUM, benchmark).
         2. DO NOT include additional fund details such as fund manager, category, or investment objective unless explicitly asked.
-        3. Keep the answer extremely concise, maximum 3 sentences.
-        4. Never provide investment advice, personal opinions, or recommendations.
-        5. If the specific attribute information is not found in the retrieved context, return a low-confidence response: "I'm sorry, I don't have the specific information for that attribute in my records."
+        3. If multiple values are found for the requested attribute, pick ONLY the mathematically valid primary one. For example, if AUM has two values, return only the primary fund size in Cr.
+        4. Keep the answer extremely concise, maximum 1 sentence. State the final value clearly.
+        5. Never provide investment advice, personal opinions, or recommendations.
+        6. If the specific attribute information is not found in the retrieved context, return a low-confidence response: "I'm sorry, I don't have the specific information for that attribute in my records."
         
         Context:
         {context}
@@ -90,7 +91,7 @@ class MutualFundRAG:
         Question: {question}
         
         Answer Format:
-        [Concise Answer Text]
+        [Concise attribute Answer Text]
         Last updated from sources: {source_url}
         """)
 

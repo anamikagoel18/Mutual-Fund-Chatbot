@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mutual Fund RAG Chatbot Dashboard</title>
+    <!-- Fonts -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap">
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-sidebar: #020617;
+            --accent-primary: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(30, 41, 59, 0.5);
+            --warning-bg: rgba(245, 158, 11, 0.15);
+            --warning-border: #f59e0b;
+            --glass-glow: rgba(59, 130, 246, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 260px 1fr 300px;
+            grid-template-rows: 60px 1fr;
+            width: 100%;
+            height: 100vh;
+            background: var(--bg-primary);
+        }
+
+        /* Header */
+        .top-nav {
+            grid-column: 1 / -1;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Sidebars */
+        .sidebar {
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--bg-secondary) transparent;
+        }
+
+        .right-sidebar {
+            background: var(--bg-sidebar);
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            opacity: 0.7;
+        }
+
+        .fund-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 4px;
+            border: 1px solid transparent;
+        }
+
+        .fund-item:hover {
+            background: var(--glass-bg);
+        }
+
+        .fund-item.selected {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid var(--accent-primary);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+        }
+
+        .fund-item .avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+
+        .fund-item.selected .avatar {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .fund-item .info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .fund-item .name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .fund-item .status {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .fund-item.selected .status {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Chat Area */
+        .chat-window {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            position: relative;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .chat-header {
+            padding: 8px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) transparent;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background-color: var(--accent-primary);
+            border-radius: 20px;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .message {
+            max-width: 80%;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+        }
+
+        .message .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        .message .content {
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-size: 15px;
+            line-height: 1.5;
+            background: var(--bg-secondary);
+            white-space: pre-wrap;
+        }
+
+        .message.user .content {
+            background: var(--accent-primary);
+        }
+
+        .message.refusal .content {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            color: #fbbf24;
+        }
+
+        .citation a {
+            color: #93c5fd;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* Suggestions */
+        .suggestion-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .suggestion-btn:hover {
+            background: var(--glass-bg);
+            color: var(--accent-primary);
+        }
+
+        /* Footer / Input */
+        .chat-footer {
+            padding: 20px 24px;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            background: var(--bg-secondary);
+            padding: 8px 16px;
+            border-radius: 14px;
+            gap: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 12px 0;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .icon-btn:hover {
+            color: var(--accent-primary);
+        }
+
+        .send-btn {
+            background: var(--accent-primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error-overlay {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const SendIcon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        );
+
+        const SearchIcon = () => (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        );
+
+        const App = () => {
+            const initialGreeting = "Hello! I am your Mutual Fund Factual Assistant. How can I help you today?";
+            const [messages, setMessages] = useState([{ id: 1, text: initialGreeting, sender: 'bot' }]);
+            const [inputValue, setInputValue] = useState("");
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [searchTerm, setSearchTerm] = useState("");
+            const [selectedFund, setSelectedFund] = useState(null);
+            const scrollRef = useRef(null);
+
+            const allFunds = [
+                { name: "HDFC Large Cap Fund", amc: "HDFC", category: "Large Cap" },
+                { name: "HDFC Mid Cap Fund", amc: "HDFC", category: "Mid Cap" },
+                { name: "HDFC Small Cap Fund", amc: "HDFC", category: "Small Cap" },
+                { name: "ICICI Prudential Large Cap Fund", amc: "ICICI", category: "Large Cap" },
+                { name: "ICICI Prudential MidCap Fund", amc: "ICICI", category: "Mid Cap" },
+                { name: "ICICI Prudential Smallcap Fund", amc: "ICICI", category: "Small Cap" },
+                { name: "Kotak Large Cap Fund", amc: "Kotak", category: "Large Cap" },
+                { name: "Kotak Midcap Fund", amc: "Kotak", category: "Mid Cap" },
+                { name: "Kotak Small Cap Fund", amc: "Kotak", category: "Small Cap" }
+            ].sort((a, b) => {
+                if (a.amc !== b.amc) return a.amc.localeCompare(b.amc);
+                const order = { "Large Cap": 0, "Mid Cap": 1, "Small Cap": 2 };
+                return order[a.category] - order[b.category];
+            });
+
+            const filteredFunds = allFunds.filter(f =>
+                f.name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            const suggestions = selectedFund ? [
+                `What is the NAV of ${selectedFund.name}?`,
+                `Expense ratio of ${selectedFund.name}?`,
+                `What is the exit load for ${selectedFund.name}?`,
+                `Check the Riskometer for ${selectedFund.name}`
+            ] : [
+                "What is the NAV of HDFC Large Cap?",
+                "Who manages Kotak Small Cap?",
+                "ICICI MidCap expense ratio?",
+                "Minimum SIP for HDFC Mid Cap?"
+            ];
+
+            useEffect(() => {
+                const timeout = setTimeout(() => {
+                    if (scrollRef.current) {
+                        scrollRef.current.scrollTo({
+                            top: scrollRef.current.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }
+                }, 100);
+                return () => clearTimeout(timeout);
+            }, [messages, loading]);
+
+            const normalizeQuery = (query) => {
+                let q = query.trim();
+                q = q.replace(/\bnav\b/gi, "NAV");
+                q = q.replace(/\bnet asset value\b/gi, "NAV");
+                return q;
+            };
+
+            const handleSend = async (queryOverride) => {
+                const query = queryOverride || inputValue;
+                if (!query.trim() || loading) return;
+
+                const normalized = normalizeQuery(query);
+                const userMessage = { id: Date.now(), text: query, sender: 'user' };
+
+                setMessages(prev => [...prev, userMessage]);
+                setInputValue("");
+                setLoading(true);
+                setError(null);
+
+                try {
+                    const response = await fetch('http://localhost:8000/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: normalized })
+                    });
+
+                    if (!response.ok) throw new Error("Server error");
+
+                    const data = await response.json();
+
+                    const isRefusal = data.response.includes("I am unable to process") ||
+                        data.response.includes("I do not provide investment advice") ||
+                        data.response.includes("I can process only one question at a time");
+
+                    const botMessage = {
+                        id: Date.now() + 1,
+                        text: data.response || "No response obtained.",
+                        sender: 'bot',
+                        isRefusal
+                    };
+
+                    setMessages(prev => [...prev, botMessage]);
+                } catch (err) {
+                    setError("Sorry, I couldn't retrieve the information right now. Please try again.");
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const formatMessage = (msg) => {
+                if (msg.sender === 'user') return msg.text;
+
+                const sourcePhrase = "Last updated from sources:";
+                if (msg.text.includes(sourcePhrase)) {
+                    const parts = msg.text.split(sourcePhrase);
+                    const url = parts[1].trim();
+                    return (
+                        <div key={msg.id}>
+                            <div>{parts[0]}</div>
+                            <div className="citation" style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', fontSize: '12px' }}>
+                                <strong>Last updated from sources:</strong> <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>
+                            </div>
+                        </div>
+                    )
+                }
+                return msg.text;
+            };
+
+            const clearHistory = () => {
+                if (window.confirm("Are you sure you want to clear the chat history?")) {
+                    setMessages([{ id: Date.now(), text: initialGreeting, sender: 'bot' }]);
+                }
+            };
+
+            return (
+                <div className="app-container">
+                    <nav className="top-nav">
+                        <div className="logo">Mutual Fund Chatbot</div>
+                        <div className="input-container" style={{ maxWidth: '400px', width: '100%', border: 'none', background: 'rgba(255,255,255,0.05)' }}>
+                            <SearchIcon />
+                            <input
+                                type="text"
+                                className="chat-input"
+                                placeholder="Search available funds..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                            {/* Icons removed as per requirement */}
+                        </div>
+                    </nav>
+
+                    <aside className="sidebar">
+                        <div className="section-title">AVAILABLE FUNDS</div>
+                        {filteredFunds.map((fund, idx) => (
+                            <div
+                                key={idx}
+                                className={`fund-item ${selectedFund?.name === fund.name ? 'selected' : ''}`}
+                                onClick={() => setSelectedFund(fund)}
+                            >
+                                <div className="avatar">{fund.amc[0]}</div>
+                                <div className="info">
+                                    <span className="name">{fund.name}</span>
+                                    <span className="status">{fund.category}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </aside>
+
+                    <main className="chat-window">
+                        <header className="chat-header">
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🤖</div>
+                                <div style={{ textAlign: 'left' }}>
+                                    <div style={{ fontWeight: '600', fontSize: '14px', lineHeight: '1.2' }}>Mutual Fund Factual Assistant</div>
+                                    <div style={{ fontSize: '11px', color: '#10b981', lineHeight: '1' }}>Online</div>
+                                </div>
+                                <button className="icon-btn" style={{ position: 'absolute', right: '24px', fontSize: '11px', color: '#ef4444', fontWeight: '500' }} onClick={clearHistory}>
+                                    Clear Chat
+                                </button>
+                            </div>
+                        </header>
+
+                        <section className="messages" ref={scrollRef}>
+                            {messages.map(msg => (
+                                <div
+                                    key={msg.id}
+                                    className={`message ${msg.sender} ${msg.isRefusal ? 'refusal' : ''}`}
+                                >
+                                    <div className="avatar" style={{ background: msg.sender === 'user' ? '#3b82f6' : (msg.isRefusal ? '#f59e0b' : '#1e293b'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                                        {msg.sender === 'user' ? '👤' : (msg.isRefusal ? '⚠️' : '🤖')}
+                                    </div>
+                                    <div className="content">
+                                        {formatMessage(msg)}
+                                    </div>
+                                </div>
+                            ))}
+                            {loading && (
+                                <div className="message bot">
+                                    <div className="avatar" style={{ background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🤖</div>
+                                    <div className="content">Thinking...</div>
+                                </div>
+                            )}
+                        </section>
+
+                        <footer className="chat-footer">
+                            <div className="input-container">
+                                <input
+                                    type="text"
+                                    className="chat-input"
+                                    placeholder="Ask anything about mutual funds..."
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                />
+                                <button className="send-btn" onClick={() => handleSend()} disabled={loading}>
+                                    <SendIcon />
+                                </button>
+                            </div>
+                            {error && <div className="error-overlay">{error}</div>}
+                        </footer>
+                    </main>
+
+                    <aside className="right-sidebar">
+                        <div className="section-title">QUICK PROMPTS</div>
+                        <div style={{ padding: '4px' }}>
+                            {suggestions.map((s, i) => (
+                                <button key={i} className="suggestion-btn" onClick={() => handleSend(s)}>
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                        <br />
+                        <div className="section-title">FUND CONTEXT</div>
+                        <div style={{ fontSize: '13px', color: '#94a3b8', padding: '10px' }}>
+                            {selectedFund ? (
+                                <div>
+                                    Showing prompts for <strong>{selectedFund.name}</strong>.
+                                    <p style={{ marginTop: '8px' }}>AMC: {selectedFund.amc}</p>
+                                    <p>Category: {selectedFund.category}</p>
+                                </div>
+                            ) : "Select a fund from the sidebar for contextual questions."}
+                        </div>
+                    </aside>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,95 @@
+import json
+import os
+import hashlib
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain_core.documents import Document
+from dotenv import load_dotenv
+
+# Load environment variables (API Key)
+load_dotenv()
+
+def generate_id(fund_name):
+    """Generates a unique and stable ID based on the fund name."""
+    return hashlib.md5(fund_name.encode()).hexdigest()
+
+def ingest_data():
+    # Paths
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_path = os.path.join(base_dir, "phase1_data_acquisition", "structured_funds.json")
+    persist_directory = os.path.join(base_dir, "vector_db")
+
+    if not os.path.exists(data_path):
+        print(f"Error: {data_path} not found. Run Phase 1 first.")
+        return
+
+    # Load data
+    with open(data_path, "r", encoding="utf-8") as f:
+        funds = json.load(f)
+
+    documents = []
+    ids = []
+    
+    for fund in funds:
+        fund_name = fund.get('Fund Name')
+        if not fund_name:
+            continue
+            
+        # Create a cohesive text block for the document content
+        content = f"Fund Name: {fund_name}\n"
+        content += f"AMC: {fund.get('AMC')}\n"
+        content += f"Category: {fund.get('Category')}\n"
+        content += f"NAV: {fund.get('NAV')}\n"
+        content += f"Expense Ratio: {fund.get('Expense Ratio')}\n"
+        content += f"Benchmark: {fund.get('Benchmark')}\n"
+        content += f"AUM: {fund.get('AUM')}\n"
+        content += f"Inception Date: {fund.get('Inception Date')}\n"
+        content += f"Minimum Lumpsum: {fund.get('Minimum Lumpsum')}\n"
+        content += f"Minimum SIP: {fund.get('Minimum SIP')}\n"
+        content += f"Exit Load: {fund.get('Exit Load')}\n"
+        content += f"Lock-in Period: {fund.get('Lock-in Period')}\n"
+        content += f"Portfolio Turnover: {fund.get('Portfolio Turnover')}\n"
+        content += f"Riskometer: {fund.get('Riskometer')}\n"
+        content += f"Fund Manager: {fund.get('Fund Manager')}\n"
+        content += f"Investment Objective: {fund.get('Investment Objective')}\n"
+        content += f"Source URL: {fund.get('Source URL')}\n"
+
+        # Define metadata
+        metadata = {
+            "fund_name": fund_name,
+            "source_url": fund.get("Source URL"),
+            "fund_category": fund.get("Category"),
+            "scheme_type": "Direct" if "Direct" in fund.get("Source URL", "") or "Direct" in fund_name else "Regular"
+        }
+
+        # Create Document object
+        doc = Document(page_content=content, metadata=metadata)
+        documents.append(doc)
+        ids.append(generate_id(fund_name))
+
+    # Initialize Embeddings
+    api_key = os.environ.get("GOOGLE_API_KEY")
+    if not api_key:
+        print("Error: GOOGLE_API_KEY not found in environment or .env file.")
+        return
+
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=api_key)
+
+    # Initialize ChromaDB and perform idempotent upsert
+    print(f"Upserting {len(documents)} documents into ChromaDB (Collection: mutual_fund_faq)...")
+    
+    # Load the existing vector store
+    vector_store = Chroma(
+        persist_directory=persist_directory,
+        embedding_function=embeddings,
+        collection_name="mutual_fund_faq"
+    )
+    
+    # Add/Update documents using stable IDs
+    # Chroma's .add_documents performs an upsert if IDs are provided and already exist
+    vector_store.add_documents(documents=documents, ids=ids)
+    
+    print(f"Success: Vector store at {persist_directory} updated with {len(documents)} documents.")
+
+if __name__ == "__main__":
+    ingest_data()

@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 
 # Load local environment variables from .env
 load_dotenv()
+import chromadb
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
@@ -119,9 +120,10 @@ def ingest_data():
     persist_directory = os.environ.get("CHROMA_DB_DIR", "/tmp/vector_db")
     print(f"--- Ingesting to: {os.path.abspath(persist_directory)} ---")
     
-    # Initialize ChromaDB
+    # Initialize ChromaDB with PersistentClient for robust migration
+    client = chromadb.PersistentClient(path=persist_directory)
     vector_store = Chroma(
-        persist_directory=persist_directory,
+        client=client,
         embedding_function=embeddings,
         collection_name="mutual_fund_faq"
     )

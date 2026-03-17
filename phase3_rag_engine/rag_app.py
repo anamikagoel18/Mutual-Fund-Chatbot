@@ -7,6 +7,7 @@ except (ImportError, KeyError):
 
 import os
 import json
+import chromadb
 import streamlit as st
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_chroma import Chroma
@@ -43,9 +44,10 @@ class MutualFundRAG:
             google_api_key=self.api_key
         )
         
-        # Load Vector Store
+        # Load Vector Store with PersistentClient
+        client = chromadb.PersistentClient(path=self.persist_directory)
         self.vector_store = Chroma(
-            persist_directory=self.persist_directory,
+            client=client,
             embedding_function=self.embeddings,
             collection_name="mutual_fund_faq"
         )

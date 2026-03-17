@@ -1,15 +1,14 @@
+import sys
 try:
-    import pysqlite3
-    import sys
-    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+    import pysqlite3.dbapi2 as pysqlite3
+    sys.modules['sqlite3'] = pysqlite3
 except ImportError:
-    pass
-except Exception:
     pass
 
 import sqlite3
-# Log SQLite version for debugging
+# Log SQLite details
 print(f"--- ACTIVE SQLITE VERSION: {sqlite3.sqlite_version} ---")
+print(f"--- SQLITE SOURCE: {getattr(sqlite3, '__file__', 'builtin')} ---")
 
 import json
 import os
@@ -97,6 +96,19 @@ if "db_initialized" not in st.session_state:
             
             # Trigger Ingestion
             st.write("Ingesting fund data into vector store...")
+            
+            # Sub-diagnostic: Test raw SQLite
+            try:
+                import sqlite3
+                conn = sqlite3.connect(":memory:")
+                cursor = conn.cursor()
+                cursor.execute("CREATE TABLE test_bootstrap (id INTEGER PRIMARY KEY)")
+                conn.commit()
+                st.write("✅ Raw SQLite bootstrap test passed.")
+                conn.close()
+            except Exception as se:
+                st.error(f"Raw SQLite test failed: {se}")
+            
             ingest_data()
             st.write(f"Files in {db_path} after ingestion: `{os.listdir(db_path)}`")
             

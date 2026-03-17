@@ -1,10 +1,8 @@
+import sys
 try:
-    import pysqlite3
-    import sys
-    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+    import pysqlite3.dbapi2 as pysqlite3
+    sys.modules['sqlite3'] = pysqlite3
 except ImportError:
-    pass
-except Exception:
     pass
 
 import sqlite3

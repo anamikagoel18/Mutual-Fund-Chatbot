@@ -1,8 +1,8 @@
+import sys
 try:
-    __import__('pysqlite3')
-    import sys
-    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-except (ImportError, KeyError):
+    import pysqlite3.dbapi2 as pysqlite3
+    sys.modules['sqlite3'] = pysqlite3
+except ImportError:
     pass
 
 import os

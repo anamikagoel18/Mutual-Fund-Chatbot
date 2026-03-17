@@ -11,7 +11,11 @@ from phase4_guardrails.guardrail_manager import GuardrailManager
 class MutualFundRAG:
     def __init__(self, threshold=0.5):
         # API Key Loading (Streamlit Secrets or Environment Variables)
-        self.api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
+        try:
+            self.api_key = st.secrets["GEMINI_API_KEY"]
+        except Exception:
+            self.api_key = os.getenv("GEMINI_API_KEY")
+
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY is not set. Please configure it in Streamlit Secrets or environment variables.")
         

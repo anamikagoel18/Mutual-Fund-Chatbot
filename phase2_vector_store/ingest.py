@@ -12,7 +12,11 @@ def generate_id(fund_name):
 
 def ingest_data():
     # API Key Loading (Streamlit Secrets or Environment Variables)
-    api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
+    try:
+        api_key = st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        api_key = os.getenv("GEMINI_API_KEY")
+
     if not api_key:
         print("❌ ERROR: GEMINI_API_KEY not found. Ingestion cannot proceed.")
         return

@@ -12,7 +12,11 @@ from phase3_rag_engine.rag_app import MutualFundRAG
 from phase4_guardrails.guardrail_manager import GuardrailManager
 
 # API Key Loading (Streamlit Secrets or Environment Variables)
-api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+except Exception:
+    api_key = os.getenv("GEMINI_API_KEY")
+
 if not api_key:
     st.error("❌ GEMINI_API_KEY is not set. Please configure it in Streamlit Secrets or environment variables.")
     st.stop()

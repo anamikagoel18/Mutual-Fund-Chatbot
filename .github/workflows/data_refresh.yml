@@ -29,10 +29,18 @@ jobs:
           python -m playwright install chromium
           python -m playwright install-deps
 
-      - name: Run Data Pulse Cycle
+      - name: Run Data Refresh Pipeline
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        run: python phase6_scheduler/data_pulse.py
+        run: |
+          echo "--- Phase 1: Scraping ---"
+          python phase1_data_acquisition/scraper.py
+          echo "--- Phase 2: Transforming ---"
+          python phase1_data_acquisition/transform_json.py
+          echo "--- Phase 3: Ingesting ---"
+          python phase2_vector_store/ingest.py
+          echo "--- Pipeline Successfully Completed ---"
 
       - name: Commit Updated Data
         run: |

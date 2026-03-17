@@ -104,9 +104,11 @@ def ingest_data():
     
     # Add/Update documents using stable IDs
     # Chroma's .add_documents performs an upsert if IDs are provided and already exist
+    print("Writing to persistent storage...")
     vector_store.add_documents(documents=documents, ids=ids)
     
-    print(f"Success: Vector store at {persist_directory} updated with {len(documents)} documents.")
+    print(f"--- Ingestion Completed Successfully: {len(documents)} documents processed ---")
 
 if __name__ == "__main__":
+    print("--- Starting Manual Data Ingestion ---")
     ingest_data()

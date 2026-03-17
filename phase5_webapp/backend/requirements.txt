@@ -1,3 +1,4 @@
+streamlit
 fastapi
 uvicorn
 pydantic
@@ -6,4 +7,6 @@ langchain-google-genai
 langchain-community
 chromadb
 google-generativeai
+playwright
+beautifulsoup4
 pytest

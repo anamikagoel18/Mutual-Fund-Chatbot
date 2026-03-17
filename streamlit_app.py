@@ -1,0 +1,112 @@
+import streamlit as st
+import os
+import sys
+from dotenv import load_dotenv
+
+# Ensure the project root is in path for imports
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
+
+from phase2_vector_store.ingest import ingest_data
+from phase3_rag_engine.rag_app import MutualFundRAG
+from phase4_guardrails.guardrail_manager import GuardrailManager
+
+# Load environment variables (API Keys)
+load_dotenv()
+
+# Page configuration
+st.set_page_config(
+    page_title="Mutual Fund Chatbot",
+    page_icon="🤖",
+    layout="wide"
+)
+
+# Sidebar with project info
+with st.sidebar:
+    st.title("About Project")
+    st.info("""
+    **Mutual Fund Factual Assistant**
+    - **RAG Engine**: Gemini 1.5 Flash
+    - **Vector Store**: ChromaDB
+    - **Guardrails**: PII, Advisory, Multi-intent
+    """)
+    st.divider()
+    st.success("App Status: Online")
+    
+    if st.button("Clear History"):
+        st.session_state.messages = []
+        st.rerun()
+
+# Initialization (Run once per session)
+if "initialized" not in st.session_state:
+    with st.status("🛠️ Initializing Application...", expanded=True) as status:
+        st.write("Ensuring Vector Database is ready...")
+        try:
+            # Self-initializing: Always ingest to ensure reliability
+            ingest_data()
+            st.write("✅ Database Ingestion Complete.")
+            
+            # Initialize Backend Logic
+            st.session_state.guardrails = GuardrailManager()
+            st.session_state.rag = MutualFundRAG()
+            
+            st.write("✅ RAG Engine & Guardrails Ready.")
+            st.session_state.initialized = True
+            status.update(label="Initialization Complete!", state="complete", expanded=False)
+        except Exception as e:
+            st.error(f"Critical Error during initialization: {e}")
+            st.stop()
+
+# Application UI
+st.title("🤖 Mutual Fund Chatbot")
+st.markdown("Ask me factual questions about Mutual Funds (NAV, AUM, Objective, etc.).")
+
+# Chat History
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Display history
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# User Interaction
+if prompt := st.chat_input("What is the NAV of Kotak Large Cap Fund?"):
+    # Clearer separation of chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Response generation
+    with st.chat_message("assistant"):
+        try:
+            # 1. Check Guardrail Flow BEFORE RAG
+            response = None
+            
+            # PII Check
+            if st.session_state.guardrails.contains_pii(prompt):
+                response = st.session_state.guardrails.get_pii_refusal()
+            
+            # Advisory Check
+            if not response and st.session_state.guardrails.is_advisory_intent(prompt):
+                response = st.session_state.guardrails.get_advisory_refusal()
+            
+            # Multi-intent Check
+            if not response and st.session_state.guardrails.is_multi_intent(prompt):
+                response = st.session_state.guardrails.get_multi_intent_refusal()
+            
+            # 2. Only if all pass -> call RAG
+            if not response:
+                with st.spinner("Analyzing funds..."):
+                    response = st.session_state.rag.query(prompt)
+            
+            # Display response
+            st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            
+        except Exception as e:
+            error_message = "I encountered an error while processing your request."
+            st.error(error_message)
+            # Log for backend monitoring
+            print(f"ERROR: {e}")

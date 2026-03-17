@@ -107,17 +107,12 @@ if "db_initialized" not in st.session_state:
                 st.write("Ingesting fund data into vector store...")
                 ingest_data(client=shared_client)
                 
-                st.write("✅ Ingestion Complete.")
-            except Exception as ce:
-                st.error(f"Initialization/Ingestion failed: {ce}")
-                raise ce
-            
-            # Initialize Backend Logic
-            st.session_state.guardrails = GuardrailManager()
-            st.session_state.rag = MutualFundRAG()
-            
-            st.session_state.db_initialized = True
-            st.write("✅ Initialization Complete.")
+                # Initialize Backend Logic
+                st.session_state.guardrails = GuardrailManager()
+                st.session_state.rag = MutualFundRAG(client=shared_client)
+                
+                st.session_state.db_initialized = True
+                st.write("✅ Initialization Complete.")
             status.update(label="Initialization Complete!", state="complete", expanded=False)
         except Exception as e:
             st.error(f"Critical Error during initialization: {e}")

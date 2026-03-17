@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 import sys
-from dotenv import load_dotenv
 
 # Ensure the project root is in path for imports
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -12,8 +11,15 @@ from phase2_vector_store.ingest import ingest_data
 from phase3_rag_engine.rag_app import MutualFundRAG
 from phase4_guardrails.guardrail_manager import GuardrailManager
 
-# Load environment variables (API Keys)
-load_dotenv()
+# API Key Loading (Streamlit Secrets or Environment Variables)
+api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
+if not api_key:
+    st.error("❌ GEMINI_API_KEY is not set. Please configure it in Streamlit Secrets or environment variables.")
+    st.stop()
+
+# Ensure the key is set in environment for underlying libraries if needed
+os.environ["GEMINI_API_KEY"] = api_key
+os.environ["GOOGLE_API_KEY"] = api_key
 
 # Page configuration
 st.set_page_config(

@@ -1,19 +1,26 @@
 import json
 import os
+import streamlit as st
 import hashlib
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
-from dotenv import load_dotenv
-
-# Load environment variables (API Key)
-load_dotenv()
 
 def generate_id(fund_name):
     """Generates a unique and stable ID based on the fund name."""
     return hashlib.md5(fund_name.encode()).hexdigest()
 
 def ingest_data():
+    # API Key Loading (Streamlit Secrets or Environment Variables)
+    api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
+    if not api_key:
+        print("❌ ERROR: GEMINI_API_KEY not found. Ingestion cannot proceed.")
+        return
+
+    # Ensure underlying libraries can find the key
+    os.environ["GOOGLE_API_KEY"] = api_key
+    os.environ["GEMINI_API_KEY"] = api_key
+
     # Paths
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_path = os.path.join(base_dir, "phase1_data_acquisition", "structured_funds.json")

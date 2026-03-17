@@ -1,21 +1,23 @@
 import os
 import json
+import streamlit as st
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from dotenv import load_dotenv
 from phase4_guardrails.guardrail_manager import GuardrailManager
-
-# Load environment variables
-load_dotenv()
 
 class MutualFundRAG:
     def __init__(self, threshold=0.5):
-        self.api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        # API Key Loading (Streamlit Secrets or Environment Variables)
+        self.api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
         if not self.api_key:
-            raise ValueError("API Key (GOOGLE_API_KEY or GEMINI_API_KEY) not found in environment.")
+            raise ValueError("GEMINI_API_KEY is not set. Please configure it in Streamlit Secrets or environment variables.")
+        
+        # Ensure underlying libraries can find the key
+        os.environ["GOOGLE_API_KEY"] = self.api_key
+        os.environ["GEMINI_API_KEY"] = self.api_key
         
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.persist_directory = os.path.join(base_dir, "vector_db")

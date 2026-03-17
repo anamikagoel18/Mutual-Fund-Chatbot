@@ -1,6 +1,6 @@
 import sys
 try:
-    import pysqlite3.dbapi2 as pysqlite3
+    import pysqlite3
     sys.modules['sqlite3'] = pysqlite3
 except ImportError:
     pass
@@ -8,7 +8,6 @@ except ImportError:
 import sqlite3
 # Log SQLite details
 print(f"--- ACTIVE SQLITE VERSION: {sqlite3.sqlite_version} ---")
-print(f"--- SQLITE SOURCE: {getattr(sqlite3, '__file__', 'builtin')} ---")
 
 import json
 import os
@@ -101,36 +100,17 @@ if "db_initialized" not in st.session_state:
             
             # Sub-diagnostic: Test raw Chroma initialization
             try:
-                st.write("Attempting raw Chroma initialization...")
-                test_client = chromadb.PersistentClient(path=db_path)
-                test_coll = test_client.get_or_create_collection("bootstrap_test")
-                st.write(f"✅ Raw Chroma collection created: `{test_coll.name}`")
-                # List tenants if possible
-                try:
-                    tenants = test_client.list_tenants()
-                    st.write(f"Active Tenants: `{[t.name for t in tenants]}`")
-                except:
-                    pass
+                st.write("Initializing ChromaDB...")
+                shared_client = chromadb.PersistentClient(path=db_path)
+                
+                # Trigger Ingestion with the SAME client
+                st.write("Ingesting fund data into vector store...")
+                ingest_data(client=shared_client)
+                
+                st.write("✅ Ingestion Complete.")
             except Exception as ce:
-                st.error(f"Raw Chroma initialization failed: {ce}")
-            
-            # Trigger Ingestion
-            st.write("Ingesting fund data into vector store...")
-            
-            # Sub-diagnostic: Test raw SQLite
-            try:
-                import sqlite3
-                conn = sqlite3.connect(":memory:")
-                cursor = conn.cursor()
-                cursor.execute("CREATE TABLE test_bootstrap (id INTEGER PRIMARY KEY)")
-                conn.commit()
-                st.write("✅ Raw SQLite bootstrap test passed.")
-                conn.close()
-            except Exception as se:
-                st.error(f"Raw SQLite test failed: {se}")
-            
-            ingest_data()
-            st.write(f"Files in {db_path} after ingestion: `{os.listdir(db_path)}`")
+                st.error(f"Initialization/Ingestion failed: {ce}")
+                raise ce
             
             # Initialize Backend Logic
             st.session_state.guardrails = GuardrailManager()

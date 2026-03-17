@@ -18,8 +18,7 @@ def ingest_data():
         api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
-        print("❌ ERROR: GEMINI_API_KEY not found. Ingestion cannot proceed.")
-        return
+        raise ValueError("GEMINI_API_KEY is not set. Please configure it using environment variables or Streamlit Secrets.")
 
     # Ensure underlying libraries can find the key
     os.environ["GOOGLE_API_KEY"] = api_key

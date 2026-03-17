@@ -18,7 +18,7 @@ except Exception:
     api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("❌ GEMINI_API_KEY is not set. Please configure it in Streamlit Secrets or environment variables.")
+    st.error("GEMINI_API_KEY is not set. Please configure it using environment variables or Streamlit Secrets.")
     st.stop()
 
 # Ensure the key is set in environment for underlying libraries if needed

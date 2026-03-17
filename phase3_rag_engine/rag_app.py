@@ -17,7 +17,7 @@ class MutualFundRAG:
             self.api_key = os.getenv("GEMINI_API_KEY")
 
         if not self.api_key:
-            raise ValueError("GEMINI_API_KEY is not set. Please configure it in Streamlit Secrets or environment variables.")
+            raise ValueError("GEMINI_API_KEY is not set. Please configure it using environment variables or Streamlit Secrets.")
         
         # Ensure underlying libraries can find the key
         os.environ["GOOGLE_API_KEY"] = self.api_key

@@ -1,9 +1,15 @@
 try:
-    __import__('pysqlite3')
+    import pysqlite3
     import sys
     sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-except (ImportError, KeyError):
+except ImportError:
     pass
+except Exception:
+    pass
+
+import sqlite3
+# Log SQLite version for debugging
+print(f"--- ACTIVE SQLITE VERSION: {sqlite3.sqlite_version} ---")
 
 import json
 import os
@@ -79,6 +85,12 @@ if "db_initialized" not in st.session_state:
                 shutil.rmtree(db_path)
             
             os.makedirs(db_path, exist_ok=True)
+            
+            # Diagnostic: Show SQLite version in UI
+            import sqlite3
+            st.write(f"SQLite Engine Version: `{sqlite3.sqlite_version}`")
+            if sqlite3.sqlite_version_info < (3, 35, 0):
+                 st.warning("SQLite version is below 3.35.0. ChromaDB may fail. Attempting to proceed...")
             
             # Trigger Ingestion
             st.write("Ingesting fund data into vector store...")

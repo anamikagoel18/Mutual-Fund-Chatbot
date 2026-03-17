@@ -1,6 +1,14 @@
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+try:
+    import pysqlite3
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+except Exception:
+    pass
+
+import sqlite3
+print(f"--- Ingesting with SQLite Version: {sqlite3.sqlite_version} ---")
 
 import json
 import os

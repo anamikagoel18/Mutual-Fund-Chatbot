@@ -54,12 +54,24 @@ def ingest_data():
         content += f"Investment Objective: {fund.get('Investment Objective')}\n"
         content += f"Source URL: {fund.get('Source URL')}\n"
 
-        # Define metadata
+        # Define metadata (Include all fields for strict consistency checks)
         metadata = {
             "fund_name": fund_name,
             "source_url": fund.get("Source URL"),
             "fund_category": fund.get("Category"),
-            "scheme_type": "Direct" if "Direct" in fund.get("Source URL", "") or "Direct" in fund_name else "Regular"
+            "scheme_type": "Direct" if "Direct" in fund.get("Source URL", "") or "Direct" in fund_name else "Regular",
+            "NAV": fund.get("NAV"),
+            "AUM": fund.get("AUM"),
+            "Minimum Lumpsum": fund.get("Minimum Lumpsum"),
+            "Minimum SIP": fund.get("Minimum SIP"),
+            "Expense Ratio": fund.get("Expense Ratio"),
+            "Benchmark": fund.get("Benchmark"),
+            "Inception Date": fund.get("Inception Date"),
+            "Exit Load": fund.get("Exit Load"),
+            "Lock-in Period": fund.get("Lock-in Period"),
+            "Portfolio Turnover": fund.get("Portfolio Turnover"),
+            "Riskometer": fund.get("Riskometer"),
+            "Fund Manager": fund.get("Fund Manager")
         }
 
         # Create Document object

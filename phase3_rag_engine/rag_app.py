@@ -13,9 +13,9 @@ load_dotenv()
 
 class MutualFundRAG:
     def __init__(self, threshold=0.5):
-        self.api_key = os.environ.get("GOOGLE_API_KEY")
+        self.api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         if not self.api_key:
-            raise ValueError("GOOGLE_API_KEY not found in environment.")
+            raise ValueError("API Key (GOOGLE_API_KEY or GEMINI_API_KEY) not found in environment.")
         
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.persist_directory = os.path.join(base_dir, "vector_db")
@@ -43,61 +43,89 @@ class MutualFundRAG:
         self.threshold = threshold
         self.guardrails = GuardrailManager()
 
-    def _format_docs(self, docs):
-        return "\n\n".join(doc.page_content for doc in docs)
+    def _normalize_query(self, query):
+        """Normalizes common fund names and aliases for better retrieval."""
+        query = query.lower()
+        aliases = {
+            "hdfc large cap": "HDFC Top 100 Fund", # Common alias for their large cap
+            "hdfc mid cap": "HDFC Mid-Cap Opportunities Fund",
+            "icici midcap": "ICICI Prudential MidCap Fund",
+            "icici large cap": "ICICI Prudential Bluechip Fund",
+            "kotak large cap": "Kotak Large Cap Fund",
+            "kotak midcap": "Kotak Emerging Equity Fund"
+        }
+        for alias, full_name in aliases.items():
+            if alias in query:
+                # Add full name to query for better vector match
+                query += f" {full_name}"
+        return query
 
     def query(self, user_query):
-        # 1. Start-of-pipeline Guardrails (PII & Intent)
+        # 1. Start-of-pipeline Guardrails (STRICT PRIORITY)
+        # Check PII
         if self.guardrails.contains_pii(user_query):
             return self.guardrails.get_pii_refusal()
         
+        # Check Advisory/Opinion
         if self.guardrails.is_advisory_intent(user_query):
             return self.guardrails.get_advisory_refusal()
-
+            
+        # Check Multi-intent (Multiple funds or attributes)
         if self.guardrails.is_multi_intent(user_query):
             return self.guardrails.get_multi_intent_refusal()
 
-        # 2. Retrieval with Similarity Score
+        # 2. Enhanced Retrieval & Selection (Only proceeds if all guardrails pass)
+        normalized_query = self._normalize_query(user_query)
         try:
-            results = self.vector_store.similarity_search_with_relevance_scores(user_query, k=2)
+            # Use k=3 as requested
+            results = self.vector_store.similarity_search_with_relevance_scores(normalized_query, k=5)
         except Exception as e:
             print(f"Error during vector retrieval: {e}")
-            if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
-                return "I'm sorry, I've exceeded my search quota for today. Please try again later."
             return "I'm sorry, I encountered an error while retrieving data. Please try again."
         
-        if not results or results[0][1] < self.threshold:
-            return "I'm sorry, I don't have the specific information for that attribute in my records."
+        if not results:
+            return "I'm sorry, I don't have information on that fund in my records."
 
-        retrieved_docs = [res[0] for res in results]
-        context = self._format_docs(retrieved_docs)
-        source_url = retrieved_docs[0].metadata.get("source_url", "N/A")
+        # Group by fund and select the one with the SINGLE HIGHEST relevancia score
+        best_doc = results[0][0]
+        max_score = results[0][1]
+        
+        # Ensure minimum relevance
+        if max_score < self.threshold:
+            # Try a broader search if first attempt was too specific
+            results = self.vector_store.similarity_search_with_relevance_scores(user_query, k=3)
+            if not results or results[0][1] < 0.2: # Hard floor
+                return "I'm sorry, I don't have specific information for that query."
+            best_doc = results[0][0]
+            max_score = results[0][1]
 
-        # 3. Prompt Engineering
+        # Use ALL attributes from the single selected fund
+        context = best_doc.page_content
+        source_url = best_doc.metadata.get("source_url", "N/A")
+
+        # 3. Prompt Engineering (No truncation for objectives)
         prompt_template = ChatPromptTemplate.from_template("""
-        You are a factual mutual fund assistant. Use ONLY the retrieved official public sources below to answer the user's question.
+        You are a factual mutual fund assistant. Use ONLY the retrieved official public sources below.
         
         Strict Instructions:
-        1. Answer ONLY the specific attribute asked in the question (e.g., expense ratio, exit load, AUM, benchmark).
-        2. DO NOT include additional fund details such as fund manager, category, or investment objective unless explicitly asked.
-        3. If multiple values are found for the requested attribute, pick ONLY the mathematically valid primary one. For example, if AUM has two values, return only the primary fund size in Cr.
-        4. Keep the answer extremely concise, maximum 1 sentence. State the final value clearly.
-        5. Never provide investment advice, personal opinions, or recommendations.
-        6. If the specific attribute information is not found in the retrieved context, return a low-confidence response: "I'm sorry, I don't have the specific information for that attribute in my records."
+        1. Answer ONLY the specific attribute asked (e.g., NAV, expense ratio, AUM).
+        2. If "Investment Objective" is asked, return the FULL text provided in the context. Do NOT truncate or summarize it.
+        3. For other attributes, be concise but ensure the exact value from the source is used.
+        4. If multiple values exist for one attribute in the context, pick the primary direct plan value. 
+        5. DO NOT return duplicate values.
+        6. Always maintain a neutral, factual tone. No investment advice.
+        7. Format: [Answer Text]
         
         Context:
         {context}
         
         Question: {question}
         
-        Answer Format:
-        [Concise attribute Answer Text]
-        Last updated from sources: {source_url}
+        Answer Text:
         """)
 
-        # 3. Execution Chain
         chain = (
-            {"context": lambda x: context, "source_url": lambda x: source_url, "question": RunnablePassthrough()}
+            {"context": lambda x: context, "question": RunnablePassthrough()}
             | prompt_template
             | self.llm
             | StrOutputParser()
@@ -107,17 +135,16 @@ class MutualFundRAG:
             response = chain.invoke(user_query)
         except Exception as e:
             print(f"Error during LLM invocation: {e}")
-            if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
-                return "I'm sorry, I've exceeded my search quota for today. Please try again later."
-            return "I'm sorry, I encountered an error while processing your request. Please try again."
+            return "I'm sorry, I encountered an error while processing your request."
         
-        # Post-generation validation for specific phrase
+        # Ensure Source URL is present and correctly mapped from selected metadata
         source_phrase = f"Last updated from sources: {source_url}"
-        if source_phrase not in response:
-            # Clean response if LLM hallucinated a different format or multiple links
-            lines = response.split('\n')
-            final_text = " ".join([l for l in lines if "http" not in l and l.strip()])
-            response = f"{final_text}\n\n{source_phrase}"
+        if "Last updated from sources" not in response:
+            response = f"{response.strip()}\n\n{source_phrase}"
+        else:
+            # Replace any hallucinated URL with the one from metadata
+            import re
+            response = re.sub(r"Last updated from sources: .*", source_phrase, response)
             
         return response
 

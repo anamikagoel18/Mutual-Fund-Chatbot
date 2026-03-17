@@ -17,11 +17,12 @@ class GuardrailManager:
             r"\b[0-9]{4,6}\b" # OTP
         ]
         
-        # Advisory/Opinion Keywords
+        # Advisory/Opinion Keywords (Granular to catch variations)
         self.advisory_keywords = [
-            "buy", "sell", "recommend", "best", "good", "suggest", 
-            "invest in", "should i", "which is better", "top fund",
-            "opinion", "advice", "growth prediction", "forecast"
+            "buy", "sell", "recommend", "best", "better", "good", "suggest", 
+            "invest in", "should i", "opinion", "advice", "prediction", "forecast",
+            "top fund", "star rating", "highest return", "future return", "choose",
+            "guide", "help me decide"
         ]
 
     def contains_pii(self, text):
@@ -40,21 +41,33 @@ class GuardrailManager:
         return False
 
     def is_multi_intent(self, text):
-        """Detects if the user is asking multiple questions (e.g., mentioning multiple funds)."""
-        # Count mentions of common fund keywords or multiple '?' marks
-        fund_keywords = ["hdfc", "icici", "kotak", "fund", "nav", "expense ratio", "exit load"]
-        found_keywords = [kw for kw in fund_keywords if kw in text.lower()]
+        """Detects if the user is asking multiple questions (e.g., mentioning multiple funds/attributes)."""
+        text_lower = text.lower()
         
-        # If multiple funds are mentioned or multiple question marks are present
-        fund_names = ["hdfc", "icici", "kotak"]
-        mentioned_funds = [f for f in fund_names if f in text.lower()]
+        # 1. Fund Mentions
+        fund_names = ["hdfc", "icici", "kotak", "tata", "sbi", "axis", "nippon", "mirae", "quant"]
+        mentioned_funds = [f for f in fund_names if f in text_lower]
         
-        if len(mentioned_funds) > 1 or text.count('?') > 1:
+        # 2. Attribute Mentions
+        attributes = ["nav", "expense ratio", "aum", "fund manager", "exit load", "risk", "lumpsum", "sip", "objective"]
+        mentioned_attrs = [a for a in attributes if a in text_lower]
+        
+        # Multi-intent triggers:
+        # - Multiple distinct funds
+        if len(mentioned_funds) > 1:
             return True
             
-        # Also check for 'and' or ',' separating likely distinct queries
-        if " and " in text.lower() and len(found_keywords) > 2:
+        # - Multiple attributes for one or more funds
+        if len(mentioned_attrs) > 1:
             return True
+            
+        # - Multiple questions or connectors with multiple keywords
+        if (text_lower.count('?') > 1 or " and " in text_lower or "," in text_lower):
+            if len(mentioned_funds) >= 1 and len(mentioned_attrs) >= 1:
+                # e.g., "NAV of HDFC and expense ratio"
+                return True
+            if len(mentioned_attrs) > 1:
+                return True
             
         return False
 

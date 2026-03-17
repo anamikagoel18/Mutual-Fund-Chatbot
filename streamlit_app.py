@@ -87,6 +87,7 @@ if "db_initialized" not in st.session_state:
                 time.sleep(1) # Ensure filesystem release
             
             os.makedirs(db_path, exist_ok=True)
+            st.write(f"Files in {db_path} after creation: `{os.listdir(db_path)}`")
             
             # Diagnostic: Show SQLite version in UI
             import sqlite3
@@ -97,6 +98,7 @@ if "db_initialized" not in st.session_state:
             # Trigger Ingestion
             st.write("Ingesting fund data into vector store...")
             ingest_data()
+            st.write(f"Files in {db_path} after ingestion: `{os.listdir(db_path)}`")
             
             # Initialize Backend Logic
             st.session_state.guardrails = GuardrailManager()

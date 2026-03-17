@@ -7,6 +7,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from phase4_guardrails.guardrail_manager import GuardrailManager
+from dotenv import load_dotenv
+
+# Load local environment variables from .env
+load_dotenv()
 
 class MutualFundRAG:
     def __init__(self, threshold=0.5):

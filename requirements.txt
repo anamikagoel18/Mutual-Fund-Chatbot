@@ -9,3 +9,4 @@ google-generativeai
 playwright
 beautifulsoup4
 pytest
+python-dotenv

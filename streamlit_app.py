@@ -1,6 +1,10 @@
 import streamlit as st
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load local environment variables from .env
+load_dotenv()
 
 # Ensure the project root is in path for imports
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -10,6 +14,10 @@ if PROJECT_ROOT not in sys.path:
 from phase2_vector_store.ingest import ingest_data
 from phase3_rag_engine.rag_app import MutualFundRAG
 from phase4_guardrails.guardrail_manager import GuardrailManager
+from dotenv import load_dotenv
+
+# Load local environment variables from .env
+load_dotenv()
 
 # API Key Loading (Streamlit Secrets or Environment Variables)
 try:

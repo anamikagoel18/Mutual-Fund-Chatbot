@@ -33,8 +33,9 @@ def ingest_data():
     os.environ["GEMINI_API_KEY"] = api_key
 
     # Paths
-    persist_directory = "/tmp/vector_db"
+    persist_directory = os.environ.get("CHROMA_DB_DIR", "/tmp/vector_db")
     os.makedirs(persist_directory, exist_ok=True)
+    print(f"--- Using Vector DB Dir: {os.path.abspath(persist_directory)} ---")
     
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_path = os.path.join(base_dir, "phase1_data_acquisition", "structured_funds.json")
@@ -111,11 +112,13 @@ def ingest_data():
     if os.path.exists(persist_directory):
         print("Clearing old vector database to remove stale documents...")
         shutil.rmtree(persist_directory, ignore_errors=True)
+        # Recreate the directory after clearing
+        os.makedirs(persist_directory, exist_ok=True)
+        print(f"--- Vector DB Directory re-initialized: {os.path.abspath(persist_directory)} ---")
 
-    # Initialize ChromaDB and perform idempotent upsert
     print(f"Upserting {len(documents)} documents into ChromaDB (Collection: mutual_fund_faq)...")
     
-    # Load the existing vector store
+    # Initialize ChromaDB
     vector_store = Chroma(
         persist_directory=persist_directory,
         embedding_function=embeddings,

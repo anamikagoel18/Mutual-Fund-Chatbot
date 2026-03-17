@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class MutualFundRAG:
-    def __init__(self, threshold=0.5):
+    def __init__(self, client=None, threshold=0.5):
         # API Key Loading (Streamlit Secrets or Environment Variables)
         try:
             self.api_key = st.secrets["GEMINI_API_KEY"]
@@ -45,7 +45,9 @@ class MutualFundRAG:
         )
         
         # Load Vector Store with PersistentClient
-        client = chromadb.PersistentClient(path=self.persist_directory)
+        if not client:
+            client = chromadb.PersistentClient(path=self.persist_directory)
+            
         self.vector_store = Chroma(
             client=client,
             embedding_function=self.embeddings,

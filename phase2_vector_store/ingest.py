@@ -25,7 +25,7 @@ def generate_id(fund_name):
     """Generates a unique and stable ID based on the fund name."""
     return hashlib.md5(fund_name.encode()).hexdigest()
 
-def ingest_data():
+def ingest_data(client=None):
     # API Key Loading (Streamlit Secrets or Environment Variables)
     try:
         api_key = st.secrets["GEMINI_API_KEY"]
@@ -119,7 +119,9 @@ def ingest_data():
     print(f"--- Ingesting to: {os.path.abspath(persist_directory)} ---")
     
     # Initialize ChromaDB with PersistentClient for robust migration
-    client = chromadb.PersistentClient(path=persist_directory)
+    if not client:
+        client = chromadb.PersistentClient(path=persist_directory)
+    
     vector_store = Chroma(
         client=client,
         embedding_function=embeddings,

@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 # Load local environment variables from .env
 load_dotenv()
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 def generate_id(fund_name):

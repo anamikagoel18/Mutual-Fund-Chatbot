@@ -16,6 +16,10 @@ import os
 import sys
 import hashlib
 import streamlit as st
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_chroma import Chroma
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.documents import Document
 from dotenv import load_dotenv
 
 # Load local environment variables from .env
@@ -29,10 +33,6 @@ if PROJECT_ROOT not in sys.path:
 from phase2_vector_store.ingest import ingest_data
 from phase3_rag_engine.rag_app import MutualFundRAG
 from phase4_guardrails.guardrail_manager import GuardrailManager
-from dotenv import load_dotenv
-
-# Load local environment variables from .env
-load_dotenv()
 
 # API Key Loading (Streamlit Secrets or Environment Variables)
 try:
@@ -83,6 +83,8 @@ if "db_initialized" not in st.session_state:
             if os.path.exists(db_path):
                 st.write("Cleaning stale database files...")
                 shutil.rmtree(db_path)
+                import time
+                time.sleep(1) # Ensure filesystem release
             
             os.makedirs(db_path, exist_ok=True)
             

@@ -35,7 +35,6 @@ class MutualFundRAG:
         os.environ["GEMINI_API_KEY"] = self.api_key
         
         self.persist_directory = os.environ.get("CHROMA_DB_DIR", "/tmp/vector_db")
-        os.makedirs(self.persist_directory, exist_ok=True)
         print(f"--- RAG Loading from: {os.path.abspath(self.persist_directory)} ---")
         
         # Initialize Embeddings (must match Phase 2)

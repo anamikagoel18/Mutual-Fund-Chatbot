@@ -66,20 +66,30 @@ with st.sidebar:
         st.rerun()
 
 # Initialization (Run once per session)
-if "initialized" not in st.session_state:
+if "db_initialized" not in st.session_state:
     with st.status("🛠️ Initializing Application...", expanded=True) as status:
-        st.write("Ensuring Vector Database is ready...")
+        import shutil
+        db_path = "/tmp/vector_db"
+        st.write(f"Setting up database at: {db_path}")
+        
         try:
-            # Self-initializing: Always ingest to ensure reliability
+            # Clean up old DB and recreate
+            if os.path.exists(db_path):
+                st.write("Cleaning stale database files...")
+                shutil.rmtree(db_path)
+            
+            os.makedirs(db_path, exist_ok=True)
+            
+            # Trigger Ingestion
+            st.write("Ingesting fund data into vector store...")
             ingest_data()
-            st.write("✅ Database Ingestion Complete.")
             
             # Initialize Backend Logic
             st.session_state.guardrails = GuardrailManager()
             st.session_state.rag = MutualFundRAG()
             
-            st.write("✅ RAG Engine & Guardrails Ready.")
-            st.session_state.initialized = True
+            st.session_state.db_initialized = True
+            st.write("✅ Initialization Complete.")
             status.update(label="Initialization Complete!", state="complete", expanded=False)
         except Exception as e:
             st.error(f"Critical Error during initialization: {e}")

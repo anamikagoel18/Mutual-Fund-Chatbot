@@ -108,15 +108,8 @@ def ingest_data():
 
     embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=api_key)
 
-    import shutil
-    if os.path.exists(persist_directory):
-        print("Clearing old vector database to remove stale documents...")
-        shutil.rmtree(persist_directory, ignore_errors=True)
-        # Recreate the directory after clearing
-        os.makedirs(persist_directory, exist_ok=True)
-        print(f"--- Vector DB Directory re-initialized: {os.path.abspath(persist_directory)} ---")
-
-    print(f"Upserting {len(documents)} documents into ChromaDB (Collection: mutual_fund_faq)...")
+    persist_directory = os.environ.get("CHROMA_DB_DIR", "/tmp/vector_db")
+    print(f"--- Ingesting to: {os.path.abspath(persist_directory)} ---")
     
     # Initialize ChromaDB
     vector_store = Chroma(

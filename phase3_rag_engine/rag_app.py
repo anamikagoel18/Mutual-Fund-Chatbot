@@ -27,8 +27,8 @@ class MutualFundRAG:
         os.environ["GOOGLE_API_KEY"] = self.api_key
         os.environ["GEMINI_API_KEY"] = self.api_key
         
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.persist_directory = os.path.join(base_dir, "vector_db")
+        self.persist_directory = "/tmp/vector_db"
+        os.makedirs(self.persist_directory, exist_ok=True)
         
         # Initialize Embeddings (must match Phase 2)
         self.embeddings = GoogleGenerativeAIEmbeddings(

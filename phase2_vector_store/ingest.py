@@ -29,9 +29,11 @@ def ingest_data():
     os.environ["GEMINI_API_KEY"] = api_key
 
     # Paths
+    persist_directory = "/tmp/vector_db"
+    os.makedirs(persist_directory, exist_ok=True)
+    
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_path = os.path.join(base_dir, "phase1_data_acquisition", "structured_funds.json")
-    persist_directory = os.path.join(base_dir, "vector_db")
 
     if not os.path.exists(data_path):
         print(f"Error: {data_path} not found. Run Phase 1 first.")

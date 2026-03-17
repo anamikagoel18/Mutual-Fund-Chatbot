@@ -11,3 +11,4 @@ beautifulsoup4
 pytest
 python-dotenv
 pysqlite3-binary
+langchain-chroma

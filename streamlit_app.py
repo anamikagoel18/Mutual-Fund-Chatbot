@@ -84,9 +84,35 @@ if "db_initialized" not in st.session_state:
             
             # Diagnostic: Show Versions
             import sqlite3
-            st.write(f"SQLite Engine Version: `{sqlite3.sqlite_version}`")
-            if sqlite3.sqlite_version_info < (3, 35, 0):
-                 st.warning("SQLite version is below 3.35.0. ChromaDB may fail. Attempting to proceed...")
+            import chromadb
+            st.write(f"ChromaDB Version: `{chromadb.__version__}`")
+            st.write(f"SQLite Module Version: `{sqlite3.sqlite_version}`")
+            try:
+                conn = sqlite3.connect(":memory:")
+                pragma_version = conn.execute('PRAGMA sqlite_version;').fetchone()[0]
+                st.write(f"SQLite C Library Version: `{pragma_version}`")
+                
+                # Check FTS5
+                fts5_check = conn.execute("SELECT name FROM pragma_module_list() WHERE name='fts5'").fetchone()
+                st.write(f"FTS5 Extension Available: `{fts5_check is not None}`")
+                conn.close()
+            except Exception as e:
+                st.write(f"Version check failed: {e}")
+            
+            # Sub-diagnostic: Test raw Chroma initialization
+            try:
+                st.write("Attempting raw Chroma initialization...")
+                test_client = chromadb.PersistentClient(path=db_path)
+                test_coll = test_client.get_or_create_collection("bootstrap_test")
+                st.write(f"✅ Raw Chroma collection created: `{test_coll.name}`")
+                # List tenants if possible
+                try:
+                    tenants = test_client.list_tenants()
+                    st.write(f"Active Tenants: `{[t.name for t in tenants]}`")
+                except:
+                    pass
+            except Exception as ce:
+                st.error(f"Raw Chroma initialization failed: {ce}")
             
             # Trigger Ingestion
             st.write("Ingesting fund data into vector store...")

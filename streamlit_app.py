@@ -74,21 +74,15 @@ with st.sidebar:
 if "db_initialized" not in st.session_state:
     with st.status("🛠️ Initializing Application...", expanded=True) as status:
         import shutil
-        db_path = "/tmp/vector_db"
-        st.write(f"Setting up database at: {db_path}")
+        import time
+        # Use a unique path to rule out caching/locks
+        db_path = f"/tmp/vector_db_{int(time.time())}"
+        st.write(f"Setting up unique database at: {db_path}")
         
         try:
-            # Clean up old DB and recreate
-            if os.path.exists(db_path):
-                st.write("Cleaning stale database files...")
-                shutil.rmtree(db_path)
-                import time
-                time.sleep(1) # Ensure filesystem release
-            
             os.makedirs(db_path, exist_ok=True)
-            st.write(f"Files in {db_path} after creation: `{os.listdir(db_path)}`")
             
-            # Diagnostic: Show SQLite version in UI
+            # Diagnostic: Show Versions
             import sqlite3
             st.write(f"SQLite Engine Version: `{sqlite3.sqlite_version}`")
             if sqlite3.sqlite_version_info < (3, 35, 0):

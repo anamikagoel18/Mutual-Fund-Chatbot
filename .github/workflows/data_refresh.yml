@@ -46,6 +46,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add phase1_data_acquisition/structured_funds.json vector_db/
-          git commit -m "Automated Data Refresh: Updated structured_funds.json and vector_db" || echo "No changes to commit"
+          git add phase1_data_acquisition/structured_funds.json structured_funds.json vector_db/
+          git commit -m "Automated Data Refresh: Updated both JSON locations and vector_db" || echo "No changes to commit"
           git push

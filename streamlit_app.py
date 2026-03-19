@@ -202,7 +202,8 @@ with chat_col:
             if "Last updated from sources:" in content:
                 parts = content.split("Last updated from sources:")
                 st.markdown(parts[0].strip())
-                st.markdown(f'<div class="source-text">Last updated from sources:<br>{parts[1].strip()}</div>', unsafe_allow_html=True)
+                url = parts[1].strip()
+                st.markdown(f'<div class="source-text">Last updated from sources:<br><a href="{url}" target="_blank" style="color: #58A6FF; text-decoration: none;">{url}</a></div>', unsafe_allow_html=True)
             else:
                 st.markdown(content)
 
@@ -236,7 +237,8 @@ with chat_col:
                     if "Last updated from sources:" in response:
                         parts = response.split("Last updated from sources:")
                         st.markdown(parts[0].strip())
-                        st.markdown(f'<div class="source-text">Last updated from sources:<br>{parts[1].strip()}</div>', unsafe_allow_html=True)
+                        url = parts[1].strip()
+                        st.markdown(f'<div class="source-text">Last updated from sources:<br><a href="{url}" target="_blank" style="color: #58A6FF; text-decoration: none;">{url}</a></div>', unsafe_allow_html=True)
                     else:
                         st.markdown(response)
                     

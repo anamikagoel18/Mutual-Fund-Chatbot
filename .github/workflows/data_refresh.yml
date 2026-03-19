@@ -10,9 +10,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'phase1_data_acquisition/**'
-      - 'phase2_vector_store/**'
   workflow_dispatch:
 
 jobs:
@@ -24,6 +21,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Debug - List Files
+        run: ls -R
 
       - name: Verify Secrets
         run: |

@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Premium Navy UI
+# Custom CSS for Premium UI (Focused on Interactivity and Alignment)
 st.markdown("""
 <style>
     /* Navy Theme Base */
@@ -39,122 +39,109 @@ st.markdown("""
         border-right: 1px solid #1A2436;
     }
     
-    /* Chat Bubble Styling */
+    /* Modern Chat Bubble Styling */
     .stChatMessage {
         border-radius: 12px;
         padding: 12px;
         margin-bottom: 12px;
+        width: fit-content;
+        max-width: 80%;
     }
     
-    /* User Message Bubble (Blue) */
+    /* User Message Bubble (Blue, Right Aligned) */
     [data-testid="stChatMessageUser"] {
-        background-color: #1A3E7A;
-        border: 1px solid #2B5797;
+        background-color: #1A3E7A !important;
+        border: 1px solid #2B5797 !important;
+        margin-left: auto !important;
     }
     
-    /* Assistant Message Bubble (Dark Grey/Navy) */
+    /* Assistant Message Bubble (Dark Grey/Navy, Left Aligned) */
     [data-testid="stChatMessageAssistant"] {
-        background-color: #10192A;
-        border: 1px solid #1A2436;
+        background-color: #10192A !important;
+        border: 1px solid #1A2436 !important;
+        margin-right: auto !important;
     }
     
-    /* Top Search Bar Styling */
-    .stTextInput input {
-        background-color: #081021;
-        border: 1px solid #1A2436;
-        color: white;
+    /* Hide Default Avatar */
+    [data-testid="stChatMessage"] .st-emotion-cache-1c7n2ka {
+        display: none;
     }
     
-    /* Status indicator */
-    .status-badge {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.9em;
-    }
-    .status-dot {
-        height: 8px;
-        width: 8px;
-        background-color: #3FB950;
-        border-radius: 50%;
+    /* Source text as muted small */
+    .source-text {
+        color: #8B949E;
+        font-size: 0.8em;
+        margin-top: 10px;
+        border-top: 1px solid #1A2436;
+        padding-top: 5px;
     }
     
-    /* Quick Prompt Buttons */
+    /* Fund Button Styling (Sidebar) */
     .stButton > button {
         background-color: #10192A !important;
         color: #C9D1D9 !important;
         border: 1px solid #1A2436 !important;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         text-align: left !important;
-        padding: 10px !important;
-        font-size: 0.85em !important;
-        transition: all 0.2s ease;
+        padding: 12px !important;
+        width: 100% !important;
+        display: block !important;
     }
+    
     .stButton > button:hover {
         border-color: #2B5797 !important;
         background-color: #1A2436 !important;
     }
     
-    /* Fund Button Styling (Sidebar) */
-    .fund-btn-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px;
-        margin-bottom: 5px;
-        background: transparent;
+    /* Highlight Selected Fund */
+    .selected-fund-btn > button {
+        border-color: #58A6FF !important;
+        background-color: #161B22 !important;
+        box-shadow: 0 0 5px rgba(88, 166, 255, 0.3);
     }
     
-    .fund-icon {
-        background-color: #1A3E7A;
-        color: white;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 6px;
-        font-weight: bold;
+    /* Pill Button Style for Quick Prompts */
+    .pill-btn > button {
+        border-radius: 30px !important;
+        padding: 5px 15px !important;
+        font-size: 0.8em !important;
+        background-color: #0D1117 !important;
     }
     
-    /* Clear Chat Link Style */
-    .clear-chat-link {
-        color: #FF4B4B;
-        cursor: pointer;
+    /* Ensure chat input is clean */
+    .stChatInput {
+        padding-bottom: 20px !important;
+    }
+    
+    /* Status indicator */
+    .status-online {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #3FB950;
         font-size: 0.85em;
-        text-decoration: none;
-        float: right;
+    }
+    .dot {
+        height: 6px;
+        width: 6px;
+        background-color: #3FB950;
+        border-radius: 50%;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# API Key Loading
-try:
-    api_key = st.secrets["GEMINI_API_KEY"]
-except Exception:
-    import os
-    from dotenv import load_dotenv
-    load_dotenv()
-    api_key = os.getenv("GEMINI_API_KEY")
-
-if not api_key:
-    st.error("GEMINI_API_KEY is not set.")
-    st.stop()
-
-DB_PATH = "/tmp/vector_db"
-
 # Initialization
 if "db_initialized" not in st.session_state:
-    with st.status("🚀 Initializing...", expanded=True) as status:
+    with st.status("🛠️ Initializing Data Systems...", expanded=True) as status:
         try:
             ingest_data() 
-            shared_client = chromadb.PersistentClient(path=DB_PATH)
+            shared_client = chromadb.PersistentClient(path="/tmp/vector_db")
             st.session_state.guardrails = GuardrailManager()
             st.session_state.rag = MutualFundRAG(client=shared_client)
             st.session_state.db_initialized = True
-            status.update(label="Ready!", state="complete", expanded=False)
+            status.update(label="System Ready!", state="complete", expanded=False)
         except Exception as e:
-            st.error(f"Failed: {e}")
+            st.error(f"Initialization Failed: {e}")
             st.stop()
 
 if "messages" not in st.session_state:
@@ -163,14 +150,13 @@ if "messages" not in st.session_state:
 if "selected_fund" not in st.session_state:
     st.session_state.selected_fund = None
 
-# Sidebar
+# Sidebar: Fund List
 with st.sidebar:
-    st.title("Mutual Fund Chatbot")
+    st.title("🤖 Mutual Fund Bot")
+    st.markdown('<div class="status-online"><div class="dot"></div> Online</div>', unsafe_allow_html=True)
     st.divider()
     
     st.subheader("AVAILABLE FUNDS")
-    
-    # Load funds data
     try:
         with open("structured_funds.json", "r", encoding="utf-8") as f:
             funds_data = json.load(f)
@@ -178,104 +164,124 @@ with st.sidebar:
         funds_data = []
 
     for fund in funds_data:
-        fund_name = fund["Fund Name"]
-        category = fund["Category"]
-        first_letter = fund_name[0]
+        fname = fund["Fund Name"]
+        fcat = fund["Category"]
+        is_selected = st.session_state.selected_fund and st.session_state.selected_fund["Fund Name"] == fname
         
-        # Use columns to mimic the complex button layout
-        col_icon, col_text = st.columns([1, 4])
-        with col_icon:
-            st.markdown(f'<div class="fund-icon">{first_letter}</div>', unsafe_allow_html=True)
-        with col_text:
-            if st.button(f"**{fund_name}**\n{category}", key=f"btn_{fund_name}"):
-                st.session_state.selected_fund = fund
-                # Auto-prompt if clicked? For now just select.
-    
-# Main Layout
-# 3 Columns for main area
-left_pad, main_col, right_col = st.columns([0.1, 3.5, 1.5])
-
-with main_col:
-    # Header
-    head1, head2 = st.columns([4, 1])
-    with head1:
-        st.markdown("""
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 30px;">🤖</div>
-            <div>
-                <b style="font-size: 1.2em;">Mutual Fund Factual Assistant</b><br>
-                <span class="status-badge"><div class="status-dot"></div> Online</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    with head2:
-        if st.button("🗑️ Clear Chat", key="clear_chat_main"):
-            st.session_state.messages = [{"role": "assistant", "content": "Hello! I am your Mutual Fund Factual Assistant. How can I help you today?"}]
-            st.session_state.selected_fund = None
+        # Wrap button in a div class for highlighting
+        btn_class = "selected-fund-btn" if is_selected else "normal-fund-btn"
+        st.markdown(f'<div class="{btn_class}">', unsafe_allow_html=True)
+        if st.button(f"**{fname}**\n{fcat}", key=f"sidebar_{fname}"):
+            st.session_state.selected_fund = fund
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
+# Main 3-Column Layout
+left_gap, chat_col, right_col = st.columns([0.1, 4, 2])
+
+with chat_col:
+    # Header area
+    head_col1, head_col2 = st.columns([5, 1])
+    with head_col1:
+        st.markdown("### 💬 Mutual Fund Assistant")
+    with head_col2:
+        if st.button("Clear Chat", key="btn_clear_chat"):
+            st.session_state.messages = [{"role": "assistant", "content": "Hello! I am your Mutual Fund Factual Assistant. How can I help you today?"}]
+            st.rerun()
+    
     st.divider()
 
-    # Chat Area
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+    # Chat context container
+    chat_container = st.container()
+    with chat_container:
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                # Split content and source if present
+                content = msg["content"]
+                if "Last updated from sources:" in content:
+                    parts = content.split("Last updated from sources:")
+                    st.markdown(parts[0].strip())
+                    st.markdown(f'<div class="source-text">Last updated from sources:<br>{parts[1].strip()}</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(content)
 
-    # Input at bottom
-    if prompt := st.chat_input("Ask anything about mutual funds..."):
+    # Input Bar (st.chat_input is natively at the bottom)
+    if prompt := st.chat_input("Ask about NAV, AUM, or specific fund details..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        st.rerun() # Refresh to show user message immediately
-
-# Response logic (run outside columns to avoid formatting issues if needed, but here it's fine)
-if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] == "user":
-    user_p = st.session_state.messages[-1]["content"]
-    with main_col:
+        
+        # Process logic immediately for seamless feel
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
         with st.chat_message("assistant"):
-            with st.spinner("Analyzing..."):
+            with st.spinner("Analyzing fund data..."):
                 try:
-                    # Guardrails
-                    resp = None
-                    if st.session_state.guardrails.contains_pii(user_p):
-                        resp = st.session_state.guardrails.get_pii_refusal()
-                    elif st.session_state.guardrails.is_advisory_intent(user_p):
-                        resp = st.session_state.guardrails.get_advisory_refusal()
-                    elif st.session_state.guardrails.is_multi_intent(user_p):
-                        resp = st.session_state.guardrails.get_multi_intent_refusal()
+                    response = None
+                    if st.session_state.guardrails.contains_pii(prompt):
+                        response = st.session_state.guardrails.get_pii_refusal()
+                    elif st.session_state.guardrails.is_advisory_intent(prompt):
+                        response = st.session_state.guardrails.get_advisory_refusal()
+                    elif st.session_state.guardrails.is_multi_intent(prompt):
+                        response = st.session_state.guardrails.get_multi_intent_refusal()
                     
-                    if not resp:
-                        resp = st.session_state.rag.query(user_p)
+                    if not response:
+                        response = st.session_state.rag.query(prompt)
                     
-                    st.markdown(resp)
-                    st.session_state.messages.append({"role": "assistant", "content": resp})
+                    # Store and display
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    # Use same source splitting logic for current response
+                    if "Last updated from sources:" in response:
+                        parts = response.split("Last updated from sources:")
+                        st.markdown(parts[0].strip())
+                        st.markdown(f'<div class="source-text">Last updated from sources:<br>{parts[1].strip()}</div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(response)
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-# Right Column: Quick Prompts & Context
+# Right Column: Prompts and Metadata
 with right_col:
     st.subheader("QUICK PROMPTS")
-    prompts = [
-        "What is the NAV of HDFC Large Cap?",
-        "Who manages Kotak Small Cap?",
-        "ICICI MidCap expense ratio?",
-        "Minimum SIP for HDFC Mid Cap?"
-    ]
+    st.markdown('<div class="pill-btn">', unsafe_allow_html=True)
+    
+    # Generic or dynamic prompts
+    if st.session_state.selected_fund:
+        current_fund = st.session_state.selected_fund["Fund Name"]
+        prompts = [
+            f"What is the NAV of {current_fund}?",
+            f"Expense ratio of {current_fund}?",
+            f"Who manages {current_fund}?",
+            f"Minimum SIP for {current_fund}?"
+        ]
+    else:
+        prompts = [
+            "What is the NAV of HDFC Large Cap?",
+            "Top HDFC midcap funds?",
+            "ICICI prudential return?",
+            "Minimum lumpsum for Kotak?"
+        ]
+        
     for p in prompts:
-        if st.button(p, key=f"prompt_{p}"):
+        if st.button(p, key=f"pill_{p}"):
             st.session_state.messages.append({"role": "user", "content": p})
             st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.divider()
     st.subheader("FUND CONTEXT")
     if st.session_state.selected_fund:
         f = st.session_state.selected_fund
-        st.info(f"""
-        **Selected**: {f['Fund Name']}
-        - **AMC**: {f['AMC']}
-        - **Category**: {f['Category']}
-        - **Inception**: {f['Inception Date']}
-        """)
-        if st.button("Query Selected Fund Details"):
-            st.session_state.messages.append({"role": "user", "content": f"Give me details for {f['Fund Name']}"})
-            st.rerun()
+        st.markdown(f"""
+        <div style="background: #10192A; padding: 15px; border-radius: 10px; border: 1px solid #1A2436;">
+            <b>{f['Fund Name']}</b><br>
+            <span style="font-size: 0.85em; color: #8B949E;">{f['Category']}</span>
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #1A2436;">
+            <div style="font-size: 0.9em;">
+                <b>AMC:</b> {f['AMC']}<br>
+                <b>Inception:</b> {f['Inception Date']}<br>
+                <b>Objective:</b> {f.get('Investment Objective', 'Factual retrieval only')[:100]}...
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        st.write("Select a fund from the sidebar for contextual questions.")
+        st.info("Select a fund from the sidebar for specific details.")

@@ -113,19 +113,19 @@ st.markdown("""
         padding-bottom: 20px !important;
     }
     
-    /* Status indicator */
-    .status-online {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: #3FB950;
-        font-size: 0.85em;
+    /* Visibility Overrides */
+    h1, h2, h3, [data-testid="stSidebarNav"] span, .stSubheader {
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
     }
-    .dot {
-        height: 6px;
-        width: 6px;
-        background-color: #3FB950;
-        border-radius: 50%;
+    
+    .status-online {
+        color: #4BD863 !important;
+        font-weight: bold;
+    }
+    
+    .stMarkdown p {
+        color: #E0E0E0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -152,11 +152,11 @@ if "selected_fund" not in st.session_state:
 
 # Sidebar: Fund List
 with st.sidebar:
-    st.title("🤖 Mutual Fund Bot")
-    st.markdown('<div class="status-online"><div class="dot"></div> Online</div>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color: white; margin-bottom: 0;">🤖 Mutual Fund Bot</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="status-online">● Online</div>', unsafe_allow_html=True)
     st.divider()
     
-    st.subheader("AVAILABLE FUNDS")
+    st.markdown('<b style="color: white; font-size: 1.1em;">AVAILABLE FUNDS</b>', unsafe_allow_html=True)
     try:
         with open("structured_funds.json", "r", encoding="utf-8") as f:
             funds_data = json.load(f)
@@ -191,60 +191,61 @@ with chat_col:
     
     st.divider()
 
-    # Chat context container
-    chat_container = st.container()
-    with chat_container:
-        for msg in st.session_state.messages:
-            with st.chat_message(msg["role"]):
-                # Split content and source if present
-                content = msg["content"]
-                if "Last updated from sources:" in content:
-                    parts = content.split("Last updated from sources:")
-                    st.markdown(parts[0].strip())
-                    st.markdown(f'<div class="source-text">Last updated from sources:<br>{parts[1].strip()}</div>', unsafe_allow_html=True)
-                else:
-                    st.markdown(content)
+    # 1. Display Message History
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            content = msg["content"]
+            if "Last updated from sources:" in content:
+                parts = content.split("Last updated from sources:")
+                st.markdown(parts[0].strip())
+                st.markdown(f'<div class="source-text">Last updated from sources:<br>{parts[1].strip()}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(content)
 
-    # Input Bar (st.chat_input is natively at the bottom)
+    # 2. Input Bar
     if prompt := st.chat_input("Ask about NAV, AUM, or specific fund details..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        
-        # Process logic immediately for seamless feel
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        
+        st.rerun()
+
+    # 3. Response Generation (Triggers whenever the last message is from user)
+    if st.session_state.messages[-1]["role"] == "user":
         with st.chat_message("assistant"):
             with st.spinner("Analyzing fund data..."):
                 try:
+                    user_query = st.session_state.messages[-1]["content"]
                     response = None
-                    if st.session_state.guardrails.contains_pii(prompt):
+                    
+                    # Guardrails
+                    if st.session_state.guardrails.contains_pii(user_query):
                         response = st.session_state.guardrails.get_pii_refusal()
-                    elif st.session_state.guardrails.is_advisory_intent(prompt):
+                    elif st.session_state.guardrails.is_advisory_intent(user_query):
                         response = st.session_state.guardrails.get_advisory_refusal()
-                    elif st.session_state.guardrails.is_multi_intent(prompt):
+                    elif st.session_state.guardrails.is_multi_intent(user_query):
                         response = st.session_state.guardrails.get_multi_intent_refusal()
                     
                     if not response:
-                        response = st.session_state.rag.query(prompt)
+                        response = st.session_state.rag.query(user_query)
                     
-                    # Store and display
+                    # Store and Display
                     st.session_state.messages.append({"role": "assistant", "content": response})
-                    # Use same source splitting logic for current response
+                    
                     if "Last updated from sources:" in response:
                         parts = response.split("Last updated from sources:")
                         st.markdown(parts[0].strip())
                         st.markdown(f'<div class="source-text">Last updated from sources:<br>{parts[1].strip()}</div>', unsafe_allow_html=True)
                     else:
                         st.markdown(response)
+                    
+                    st.rerun() # Refresh to stop the spinner and finalize state
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-# Right Column: Prompts and Metadata
+# Right Column: Quick Prompts
 with right_col:
-    st.subheader("QUICK PROMPTS")
+    st.markdown('<b style="color: white; font-size: 1.1em;">QUICK PROMPTS</b>', unsafe_allow_html=True)
     st.markdown('<div class="pill-btn">', unsafe_allow_html=True)
     
-    # Generic or dynamic prompts
+    # Define prompts based on selection
     if st.session_state.selected_fund:
         current_fund = st.session_state.selected_fund["Fund Name"]
         prompts = [
@@ -266,22 +267,3 @@ with right_col:
             st.session_state.messages.append({"role": "user", "content": p})
             st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
-
-    st.divider()
-    st.subheader("FUND CONTEXT")
-    if st.session_state.selected_fund:
-        f = st.session_state.selected_fund
-        st.markdown(f"""
-        <div style="background: #10192A; padding: 15px; border-radius: 10px; border: 1px solid #1A2436;">
-            <b>{f['Fund Name']}</b><br>
-            <span style="font-size: 0.85em; color: #8B949E;">{f['Category']}</span>
-            <hr style="margin: 10px 0; border: none; border-top: 1px solid #1A2436;">
-            <div style="font-size: 0.9em;">
-                <b>AMC:</b> {f['AMC']}<br>
-                <b>Inception:</b> {f['Inception Date']}<br>
-                <b>Objective:</b> {f.get('Investment Objective', 'Factual retrieval only')[:100]}...
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.info("Select a fund from the sidebar for specific details.")

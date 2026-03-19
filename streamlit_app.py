@@ -99,20 +99,19 @@ if "db_initialized" not in st.session_state:
                 st.write(f"Version check failed: {e}")
             
             # Sub-diagnostic: Test raw Chroma initialization
-            try:
-                st.write("Initializing ChromaDB...")
-                shared_client = chromadb.PersistentClient(path=db_path)
-                
-                # Trigger Ingestion with the SAME client
-                st.write("Ingesting fund data into vector store...")
-                ingest_data(client=shared_client)
-                
-                # Initialize Backend Logic
-                st.session_state.guardrails = GuardrailManager()
-                st.session_state.rag = MutualFundRAG(client=shared_client)
-                
-                st.session_state.db_initialized = True
-                st.write("✅ Initialization Complete.")
+            st.write("Initializing ChromaDB...")
+            shared_client = chromadb.PersistentClient(path=db_path)
+            
+            # Trigger Ingestion with the SAME client
+            st.write("Ingesting fund data into vector store...")
+            ingest_data(client=shared_client)
+            
+            # Initialize Backend Logic
+            st.session_state.guardrails = GuardrailManager()
+            st.session_state.rag = MutualFundRAG(client=shared_client)
+            
+            st.session_state.db_initialized = True
+            st.write("✅ Initialization Complete.")
             status.update(label="Initialization Complete!", state="complete", expanded=False)
         except Exception as e:
             st.error(f"Critical Error during initialization: {e}")

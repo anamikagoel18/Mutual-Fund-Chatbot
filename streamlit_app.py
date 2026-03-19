@@ -160,6 +160,10 @@ with st.sidebar:
     try:
         with open("structured_funds.json", "r", encoding="utf-8") as f:
             funds_data = json.load(f)
+            # Custom sort: Kotak -> HDFC -> ICICI, and Large -> Mid -> Small
+            amc_order = {"Kotak Mutual Fund": 0, "HDFC Mutual Fund": 1, "ICICI Mutual Fund": 2}
+            cat_order = {"Large-Cap": 0, "Mid-Cap": 1, "Small-Cap": 2}
+            funds_data.sort(key=lambda x: (amc_order.get(x["AMC"], 99), cat_order.get(x["Category"], 99)))
     except:
         funds_data = []
 

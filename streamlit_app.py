@@ -1,4 +1,7 @@
 import sys
+import os
+
+# 1. SQLite Fix for Streamlit Cloud
 try:
     import pysqlite3
     sys.modules['sqlite3'] = pysqlite3
@@ -6,166 +9,197 @@ except ImportError:
     pass
 
 import sqlite3
-# Log SQLite details
-print(f"--- ACTIVE SQLITE VERSION: {sqlite3.sqlite_version} ---")
-
 import json
-import os
-import sys
-import hashlib
+import time
 import streamlit as st
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
-from langchain_chroma import Chroma
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.documents import Document
-from dotenv import load_dotenv
-
-# Load local environment variables from .env
-load_dotenv()
-
-# Ensure the project root is in path for imports
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-if PROJECT_ROOT not in sys.path:
-    sys.path.append(PROJECT_ROOT)
-
+import chromadb
 from phase2_vector_store.ingest import ingest_data
 from phase3_rag_engine.rag_app import MutualFundRAG
 from phase4_guardrails.guardrail_manager import GuardrailManager
-
-# API Key Loading (Streamlit Secrets or Environment Variables)
-try:
-    api_key = st.secrets["GEMINI_API_KEY"]
-except Exception:
-    api_key = os.getenv("GEMINI_API_KEY")
-
-if not api_key:
-    st.error("GEMINI_API_KEY is not set. Please configure it using environment variables or Streamlit Secrets.")
-    st.stop()
-
-# Ensure the key is set in environment for underlying libraries if needed
-os.environ["GEMINI_API_KEY"] = api_key
-os.environ["GOOGLE_API_KEY"] = api_key
 
 # Page configuration
 st.set_page_config(
     page_title="Mutual Fund Chatbot",
     page_icon="🤖",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Sidebar with project info
-with st.sidebar:
-    st.title("About Project")
-    st.info("""
-    **Mutual Fund Factual Assistant**
-    - **RAG Engine**: Gemini 1.5 Flash
-    - **Vector Store**: ChromaDB
-    - **Guardrails**: PII, Advisory, Multi-intent
-    """)
-    st.divider()
-    st.success("App Status: Online")
+# Custom CSS for Premium UI
+st.markdown("""
+<style>
+    /* Dark Theme Base */
+    .stApp {
+        background-color: #0E1117;
+        color: #E0E0E0;
+    }
     
-    if st.button("Clear History"):
-        st.session_state.messages = []
-        st.rerun()
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"] {
+        background-color: #161B22;
+        border-right: 1px solid #30363D;
+    }
+    
+    /* Chat Bubble Styling */
+    .stChatMessage {
+        border-radius: 15px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    
+    /* User Message Bubble */
+    [data-testid="stChatMessageUser"] {
+        background-color: #238636;
+        border: 1px solid #2EA043;
+    }
+    
+    /* Assistant Message Bubble */
+    [data-testid="stChatMessageAssistant"] {
+        background-color: #21262D;
+        border: 1px solid #30363D;
+    }
+    
+    /* Custom Header */
+    .chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0px;
+        border-bottom: 2px solid #30363D;
+        margin-bottom: 20px;
+    }
+    
+    .status-online {
+        color: #3FB950;
+        font-size: 0.8em;
+    }
+    
+    /* Fund List Item */
+    .fund-list-item {
+        padding: 8px;
+        margin: 5px 0px;
+        background: #0D1117;
+        border-radius: 8px;
+        border: 1px solid #30363D;
+        font-size: 0.9em;
+    }
+    
+    /* Quick Prompt Buttons */
+    .stButton > button {
+        background-color: #21262D;
+        color: #C9D1D9;
+        border: 1px solid #30363D;
+        border-radius: 8px;
+        width: 100%;
+        text-align: left;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# Initialization (Run once per session)
+# API Key Loading
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+except Exception:
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    api_key = os.getenv("GEMINI_API_KEY")
+
+if not api_key:
+    st.error("GEMINI_API_KEY is not set. Please configure it in Streamlit Secrets or .env.")
+    st.stop()
+
+# Persistent Path
+DB_PATH = "/tmp/vector_db"
+
+# Initialization
 if "db_initialized" not in st.session_state:
-    with st.status("🛠️ Initializing Application...", expanded=True) as status:
-        import shutil
-        import time
-        # Use a unique path to rule out caching/locks
-        db_path = f"/tmp/vector_db_{int(time.time())}"
-        st.write(f"Setting up unique database at: {db_path}")
-        
+    with st.status("🚀 Preparing Mutual Fund Database...", expanded=True) as status:
+        st.write("Initializing vector store...")
         try:
-            os.makedirs(db_path, exist_ok=True)
+            # Ensure Ingestion runs once (per session, to handle ephemeral /tmp)
+            ingest_data() 
             
-            # Diagnostic: Show Versions
-            import sqlite3
-            import chromadb
-            st.write(f"ChromaDB Version: `{chromadb.__version__}`")
-            st.write(f"SQLite Module Version: `{sqlite3.sqlite_version}`")
-            try:
-                conn = sqlite3.connect(":memory:")
-                pragma_version = conn.execute('PRAGMA sqlite_version;').fetchone()[0]
-                st.write(f"SQLite C Library Version: `{pragma_version}`")
-                
-                # Check FTS5
-                fts5_check = conn.execute("SELECT name FROM pragma_module_list() WHERE name='fts5'").fetchone()
-                st.write(f"FTS5 Extension Available: `{fts5_check is not None}`")
-                conn.close()
-            except Exception as e:
-                st.write(f"Version check failed: {e}")
-            
-            # Sub-diagnostic: Test raw Chroma initialization
-            st.write("Initializing ChromaDB...")
-            shared_client = chromadb.PersistentClient(path=db_path)
-            
-            # Trigger Ingestion with the SAME client
-            st.write("Ingesting fund data into vector store...")
-            ingest_data(client=shared_client)
-            
-            # Initialize Backend Logic
+            # Load Backend Engines
+            shared_client = chromadb.PersistentClient(path=DB_PATH)
             st.session_state.guardrails = GuardrailManager()
             st.session_state.rag = MutualFundRAG(client=shared_client)
             
             st.session_state.db_initialized = True
-            st.write("✅ Initialization Complete.")
             status.update(label="Initialization Complete!", state="complete", expanded=False)
         except Exception as e:
-            st.error(f"Critical Error during initialization: {e}")
+            st.error(f"Initialization Failed: {e}")
             st.stop()
 
-# Application UI
-st.title("🤖 Mutual Fund Chatbot")
-st.markdown("Ask me factual questions about Mutual Funds (NAV, AUM, Objective, etc.).")
+# Sidebar Content
+with st.sidebar:
+    st.title("🤖 Mutual Fund Bot")
+    st.markdown('<div class="status-online">● Online</div>', unsafe_allow_html=True)
+    st.divider()
+    
+    st.subheader("📊 AVAILABLE FUNDS")
+    search_query = st.text_input("Search funds...", placeholder="Type to filter...")
+    
+    # Load funds list for display
+    try:
+        with open("structured_funds.json", "r", encoding="utf-8") as f:
+            funds_data = json.load(f)
+            fund_names = [f["Fund Name"] for f in funds_data]
+    except:
+        fund_names = ["HDFC Large Cap", "Kotak Midcap", "ICICI Smallcap"] # Fallback
+    
+    filtered_funds = [f for f in fund_names if search_query.lower() in f.lower()]
+    for name in filtered_funds:
+        st.markdown(f'<div class="fund-list-item">{name}</div>', unsafe_allow_html=True)
+
+# Main Header
+col1, col2 = st.columns([1, 1])
+with col1:
+    st.markdown('### 💬 Mutual Fund Assistant')
+with col2:
+    if st.button("🗑️ Clear Chat", use_container_width=False):
+        st.session_state.messages = []
+        st.rerun()
 
 # Chat History
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [
+        {"role": "assistant", "content": "Hello! I am your Mutual Fund Factual Assistant. How can I help you today?"}
+    ]
 
-# Display history
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# User Interaction
-if prompt := st.chat_input("What is the NAV of Kotak Large Cap Fund?"):
-    # Clearer separation of chat history
+# Chat Input
+if prompt := st.chat_input("Ask about NAV, AUM, or Expense Ratio..."):
+    # Add User Message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
-
-    # Response generation
+    
+    # Generate Assistant Response
     with st.chat_message("assistant"):
-        try:
-            # 1. Check Guardrail Flow BEFORE RAG
-            response = None
-            
-            # PII Check
-            if st.session_state.guardrails.contains_pii(prompt):
-                response = st.session_state.guardrails.get_pii_refusal()
-            
-            # Advisory Check
-            if not response and st.session_state.guardrails.is_advisory_intent(prompt):
-                response = st.session_state.guardrails.get_advisory_refusal()
-            
-            # Multi-intent Check
-            if not response and st.session_state.guardrails.is_multi_intent(prompt):
-                response = st.session_state.guardrails.get_multi_intent_refusal()
-            
-            # 2. Only if all pass -> call RAG
-            if not response:
-                with st.spinner("Analyzing funds..."):
+        with st.spinner("Analyzing fund data..."):
+            try:
+                # 1. Guardrail Checks
+                response = None
+                if st.session_state.guardrails.contains_pii(prompt):
+                    response = st.session_state.guardrails.get_pii_refusal()
+                elif st.session_state.guardrails.is_advisory_intent(prompt):
+                    response = st.session_state.guardrails.get_advisory_refusal()
+                elif st.session_state.guardrails.is_multi_intent(prompt):
+                    response = st.session_state.guardrails.get_multi_intent_refusal()
+                
+                # 2. RAG Query
+                if not response:
                     response = st.session_state.rag.query(prompt)
-            
-            # Display response
-            st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
-            
-        except Exception as e:
-            error_message = "I encountered an error while processing your request."
-            st.error(error_message)
-            # Log for backend monitoring
-            print(f"ERROR: {e}")
+                
+                # Display and Save
+                st.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+                
+            except Exception as e:
+                err = "I encountered an error. Please try again."
+                st.error(f"Error: {e}")
+                st.session_state.messages.append({"role": "assistant", "content": err})

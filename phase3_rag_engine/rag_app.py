@@ -66,19 +66,33 @@ class MutualFundRAG:
 
     def _normalize_query(self, query):
         """Normalizes common fund names and aliases for better retrieval."""
-        query = query.lower()
+        query = query.lower().strip()
+        
+        # Comprehensive Alias Mapping
         aliases = {
-            "hdfc large cap": "HDFC Top 100 Fund", # Common alias for their large cap
+            "hdfc large cap": "HDFC Large Cap Fund",
+            "hdfc top 100": "HDFC Large Cap Fund",
             "hdfc mid cap": "HDFC Mid-Cap Opportunities Fund",
-            "icici midcap": "ICICI Prudential MidCap Fund",
+            "hdfc midcap": "HDFC Mid-Cap Opportunities Fund",
+            "hdfc small cap": "HDFC Small Cap Fund",
             "icici large cap": "ICICI Prudential Bluechip Fund",
+            "icici bluechip": "ICICI Prudential Bluechip Fund",
+            "icici midcap": "ICICI Prudential MidCap Fund",
+            "icici mid cap": "ICICI Prudential MidCap Fund",
+            "icici small cap": "ICICI Prudential Smallcap Fund",
+            "icici smallcap": "ICICI Prudential Smallcap Fund",
             "kotak large cap": "Kotak Large Cap Fund",
-            "kotak midcap": "Kotak Emerging Equity Fund"
+            "kotak midcap": "Kotak Emerging Equity Fund",
+            "kotak mid cap": "Kotak Emerging Equity Fund",
+            "kotak emerging": "Kotak Emerging Equity Fund",
+            "kotak small cap": "Kotak Small Cap Fund"
         }
+        
         for alias, full_name in aliases.items():
             if alias in query:
-                # Add full name to query for better vector match
-                query += f" {full_name}"
+                # Replace or append the formal name
+                query = query.replace(alias, full_name)
+        
         return query
 
     def query(self, user_query):
@@ -124,25 +138,27 @@ class MutualFundRAG:
         context = best_doc.page_content
         source_url = best_doc.metadata.get("source_url", "N/A")
 
-        # 3. Prompt Engineering (No truncation for objectives)
+        # 3. Prompt Engineering (Strict Natural Language Output)
         prompt_template = ChatPromptTemplate.from_template("""
         You are a factual mutual fund assistant. Use ONLY the retrieved official public sources below.
         
         Strict Instructions:
-        1. Answer ONLY the specific attribute asked (e.g., NAV, expense ratio, AUM).
-        2. If "Investment Objective" is asked, return the FULL text provided in the context. Do NOT truncate or summarize it.
-        3. For other attributes, be concise but ensure the exact value from the source is used.
-        4. If multiple values exist for one attribute in the context, pick the primary direct plan value. 
-        5. DO NOT return duplicate values.
-        6. Always maintain a neutral, factual tone. No investment advice.
-        7. Format: [Answer Text]
+        1. Answer in a complete, natural sentence. 
+           Format: "The [Attribute] of [Fund Name] is [Value]."
+           Example: "The NAV of Kotak Midcap Fund is ₹147.14."
+        2. If "Investment Objective" is asked, return: "The investment objective of [Fund Name] is: [Full Text]"
+        3. Do NOT return raw values alone.
+        4. Use ONLY the information provided in the Context.
+        5. If multiple values exist (e.g., Growth vs IDCW), always pick the Growth/Direct plan value.
+        6. DO NOT return multiple funds. Focus only on the primary fund mentioned in the context.
+        7. Maintain a neutral, factual tone. No advice.
         
         Context:
         {context}
         
         Question: {question}
         
-        Answer Text:
+        Answer:
         """)
 
         chain = (
@@ -158,16 +174,14 @@ class MutualFundRAG:
             print(f"Error during LLM invocation: {e}")
             return "I'm sorry, I encountered an error while processing your request."
         
-        # Ensure Source URL is present and correctly mapped from selected metadata
-        source_phrase = f"Last updated from sources: {source_url}"
-        if "Last updated from sources" not in response:
-            response = f"{response.strip()}\n\n{source_phrase}"
-        else:
-            # Replace any hallucinated URL with the one from metadata
-            import re
-            response = re.sub(r"Last updated from sources: .*", source_phrase, response)
-            
-        return response
+        # Ensure Source URL is present and correctly mapped
+        source_phrase = f"Last updated from sources:\n{source_url}"
+        
+        # Clean response if LLM added its own URL or used old format
+        import re
+        response = re.sub(r"Last updated from sources:.*", "", response, flags=re.DOTALL).strip()
+        
+        return f"{response}\n\n{source_phrase}"
 
 if __name__ == "__main__":
     rag = MutualFundRAG()

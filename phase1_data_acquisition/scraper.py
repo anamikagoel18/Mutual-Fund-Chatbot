@@ -110,19 +110,35 @@ class INDmoneyScraper:
             return None
 
     async def run(self):
+        print(f"--- Starting Scraper for {len(self.urls)} URLs ---")
         for url in self.urls:
-            html = await self.fetch_page(url)
-            if html:
-                json_data = self.parse_json(html)
-                if json_data:
-                    extracted = self.extract_fields(json_data, url)
-                    if extracted:
-                        self.results.append(extracted)
+            try:
+                html = await self.fetch_page(url)
+                if html:
+                    json_data = self.parse_json(html)
+                    if json_data:
+                        extracted = self.extract_fields(json_data, url)
+                        if extracted:
+                            self.results.append(extracted)
+                            print(f"Successfully scraped: {extracted['Fund Name']}")
+                        else:
+                            print(f"Failed to extract fields for: {url}")
+                    else:
+                        print(f"Failed to parse JSON for: {url}")
+                else:
+                    print(f"Failed to fetch HTML for: {url}")
+            except Exception as e:
+                print(f"Unexpected error scraping {url}: {e}")
         
+        if not self.results:
+            print("CRITICAL: No funds were scraped. Skipping save to prevent data loss.")
+            return
+
+        print(f"--- Scraping Complete. Collected {len(self.results)} funds. ---")
         output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "structured_funds.json")
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2)
-        print(f"Successfully scraped {len(self.results)} funds and saved to {output_path}")
+        print(f"Successfully saved to {output_path}")
 
 if __name__ == "__main__":
     urls = [

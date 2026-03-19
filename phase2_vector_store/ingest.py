@@ -40,7 +40,9 @@ def ingest_data(client=None):
     os.environ["GEMINI_API_KEY"] = api_key
 
     # Paths
-    persist_directory = os.environ.get("CHROMA_DB_DIR", "/tmp/vector_db")
+    # If in GHA or Local, use root 'vector_db'. If in Streamlit, use '/tmp/vector_db'
+    default_persist = "/tmp/vector_db" if "STREAMLIT_RUNTIME" in os.environ or os.path.exists("/app") else "vector_db"
+    persist_directory = os.environ.get("CHROMA_DB_DIR", default_persist)
     os.makedirs(persist_directory, exist_ok=True)
     print(f"--- Using Vector DB Dir: {os.path.abspath(persist_directory)} ---")
     
@@ -115,7 +117,8 @@ def ingest_data(client=None):
 
     embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=api_key)
 
-    persist_directory = os.environ.get("CHROMA_DB_DIR", "/tmp/vector_db")
+    default_persist = "/tmp/vector_db" if "STREAMLIT_RUNTIME" in os.environ or os.path.exists("/app") else "vector_db"
+    persist_directory = os.environ.get("CHROMA_DB_DIR", default_persist)
     print(f"--- Ingesting to: {os.path.abspath(persist_directory)} ---")
     
     # Initialize ChromaDB with PersistentClient for robust migration

@@ -117,6 +117,11 @@ def ingest_data(client=None):
 
     embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=api_key)
 
+    if not api_key:
+        print("Error: GOOGLE_API_KEY / GEMINI_API_KEY not found. Ingestion cannot proceed.")
+        import sys
+        sys.exit(1)
+
     default_persist = "/tmp/vector_db" if "STREAMLIT_RUNTIME" in os.environ or os.path.exists("/app") else "vector_db"
     persist_directory = os.environ.get("CHROMA_DB_DIR", default_persist)
     print(f"--- Ingesting to: {os.path.abspath(persist_directory)} ---")

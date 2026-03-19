@@ -132,7 +132,7 @@ class INDmoneyScraper:
         
         if not self.results:
             print("CRITICAL: No funds were scraped. Skipping save to prevent data loss.")
-            return
+            sys.exit(1) # Exit with error to notify GitHub Actions
 
         print(f"--- Scraping Complete. Collected {len(self.results)} funds. ---")
         output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "structured_funds.json")

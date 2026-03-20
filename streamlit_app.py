@@ -262,10 +262,10 @@ with right_col:
         ]
     else:
         prompts = [
-            "What is the NAV of HDFC Large Cap?",
-            "Top HDFC midcap funds?",
-            "ICICI prudential return?",
-            "Minimum lumpsum for Kotak?"
+            "What is the exit load of ICICI Prudential LargeCap Fund?",
+            "What is the expense ratio of Kotak Midcap Fund?",
+            "What is the investment objective of HDFC Mid Cap Fund?",
+            "What is the minimum SIP for ICICI Smallcap Fund?"
         ]
         
     for p in prompts:

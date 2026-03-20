@@ -171,8 +171,11 @@ class MutualFundRAG:
         try:
             response = chain.invoke(user_query)
         except Exception as e:
-            print(f"Error during LLM invocation: {e}")
-            return "I'm sorry, I encountered an error while processing your request."
+            error_details = str(e)
+            print(f"Error during LLM invocation: {error_details}")
+            if "quota" in error_details.lower():
+                return "I'm sorry, the AI service is currently busy (quota exceeded). Please try again in a minute."
+            return f"I'm sorry, I encountered an error while processing your request: {error_details[:100]}"
         
         # Ensure Source URL is present and correctly mapped
         source_phrase = f"Last updated from sources:\n{source_url}"

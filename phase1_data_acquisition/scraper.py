@@ -20,10 +20,11 @@ class INDmoneyScraper:
             print(f"Scraping: {url}...")
             try:
                 await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-                await asyncio.sleep(5) # Give more time for JS to load
+                await asyncio.sleep(5) 
                 content = await page.content()
-                if "Access Denied" in content or "cloudfare" in content.lower() or "bot" in content.lower():
-                     print(f"❗ Bot detection triggered or access denied at {url}")
+                # Avoid false positive on "robots" meta tag. Look for CAPTCHA or Access Denied.
+                if "Access Denied" in content or "cloudflare-static" in content.lower() or "captcha" in content.lower():
+                     print(f"❗ Real Bot detection / Access Denied at {url}")
                      print(f"Content Snapshot: {content[:500]}")
                 return content
             except Exception as e:
@@ -34,6 +35,15 @@ class INDmoneyScraper:
 
     def parse_json(self, html):
         soup = BeautifulSoup(html, 'html.parser')
+        # Target Next.js data specifically
+        script = soup.find('script', id='__NEXT_DATA__')
+        if script and script.string:
+            try:
+                return json.loads(script.string)
+            except Exception as e:
+                print(f"Error parsing __NEXT_DATA__: {e}")
+        
+        # Fallback to searching all scripts for "props"
         scripts = soup.find_all('script')
         for script in scripts:
             if script.string and '"props"' in script.string:
@@ -43,6 +53,7 @@ class INDmoneyScraper:
                         return json.loads(match.group(0))
                 except:
                     continue
+        print(f"❌ Failed to find any usable JSON data in scripts.")
         return None
 
     def extract_fields(self, data, url):

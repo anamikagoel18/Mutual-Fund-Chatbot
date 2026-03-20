@@ -51,7 +51,8 @@ jobs:
           echo "=========================================="
           echo "Secrets Status: ${{ secrets.GEMINI_API_KEY != '' && 'SET' || 'MISSING' }}"
           echo "Python Version: $(python3 --version)"
-          echo "Files in Acquisition Dir: $(ls phase1_data_acquisition/ | xargs)"
+          echo "Phase 1 Files: $(ls phase1_data_acquisition/ | xargs)"
+          echo "Phase 2 Files: $(ls phase2_vector_store/ | xargs)"
           echo "=========================================="
 
       - name: Set up Python

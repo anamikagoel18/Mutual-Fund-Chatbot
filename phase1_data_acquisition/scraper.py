@@ -19,9 +19,12 @@ class INDmoneyScraper:
             page = await context.new_page()
             print(f"Scraping: {url}...")
             try:
-                await page.goto(url, wait_until="networkidle", timeout=60000)
-                await asyncio.sleep(2) 
+                await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                await asyncio.sleep(5) # Give more time for JS to load
                 content = await page.content()
+                if "Access Denied" in content or "cloudfare" in content.lower() or "bot" in content.lower():
+                     print(f"❗ Bot detection triggered or access denied at {url}")
+                     print(f"Content Snapshot: {content[:500]}")
                 return content
             except Exception as e:
                 print(f"Error fetching {url}: {e}")

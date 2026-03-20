@@ -111,6 +111,9 @@ class INDmoneyScraper:
 
     async def run(self):
         print(f"--- Starting Scraper for {len(self.urls)} URLs ---")
+        import traceback
+        import sys
+        
         for url in self.urls:
             try:
                 html = await self.fetch_page(url)
@@ -120,24 +123,25 @@ class INDmoneyScraper:
                         extracted = self.extract_fields(json_data, url)
                         if extracted:
                             self.results.append(extracted)
-                            print(f"Successfully scraped: {extracted['Fund Name']}")
+                            print(f"✅ Successfully scraped: {extracted['Fund Name']}")
                         else:
-                            print(f"Failed to extract fields for: {url}")
+                            print(f"❌ Failed to extract fields for: {url}")
                     else:
-                        print(f"Failed to parse JSON for: {url}")
+                        print(f"❌ Failed to parse JSON for: {url} (Site structure might have changed)")
                 else:
-                    print(f"Failed to fetch HTML for: {url}")
+                    print(f"❌ Failed to fetch HTML for: {url} (Likely blocked or timeout)")
             except Exception as e:
-                print(f"Unexpected error scraping {url}: {e}")
+                print(f"❗ Unexpected error scraping {url}: {e}")
+                traceback.print_exc()
         
         if not self.results:
-            print("CRITICAL: No funds were scraped. Skipping save to prevent data loss.")
-            sys.exit(1) # Exit with error to notify GitHub Actions
+            print("CRITICAL ERROR: No funds were scraped. Possible IP block or major site update.")
+            sys.exit(1)
 
         print(f"--- Scraping Complete. Collected {len(self.results)} funds. ---")
         output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "structured_funds.json")
         with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(self.results, f, indent=2)
+            json.dump(self.results, f, indent=2, ensure_ascii=False)
         print(f"Successfully saved to {output_path}")
 
 if __name__ == "__main__":

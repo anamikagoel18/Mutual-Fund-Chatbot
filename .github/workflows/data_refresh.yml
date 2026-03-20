@@ -20,6 +20,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Debug - Environment & Connectivity
+        run: |
+          echo "Python Version:"
+          python3 --version
+          echo "Testing Connectivity to INDmoney..."
+          curl -I https://www.indmoney.com/mutual-funds/kotak-large-cap-direct-growth-3941 || echo "Curl failed!"
+          echo "Disk Space:"
+          df -h
+
       - name: Verify Secrets and Environment
         run: |
           echo "Checking for GEMINI_API_KEY..."

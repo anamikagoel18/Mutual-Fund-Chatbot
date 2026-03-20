@@ -3,7 +3,7 @@ import os
 
 # 1. SQLite Fix for Streamlit Cloud
 try:
-    import pysqlite3
+    import pysqlite3.dbapi2 as pysqlite3
     sys.modules['sqlite3'] = pysqlite3
 except ImportError:
     pass

@@ -56,7 +56,7 @@ class MutualFundRAG:
         
         # Initialize LLM (Gemini 1.5 Flash latest for stable quota)
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-flash-latest", 
+            model="gemini-1.5-flash", 
             google_api_key=self.api_key,
             temperature=0
         )

@@ -1,8 +1,4 @@
-# Manual Trigger Heartbeat: 2026-03-20 00:10 IST
 name: Mutual Fund Data Refresh
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 on:
   schedule:
@@ -15,6 +11,8 @@ on:
 jobs:
   refresh-data:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
     permissions:
       contents: write
     
@@ -22,14 +20,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Debug - List Files
-        run: ls -R
-
-      - name: Verify Secrets
+      - name: Verify Secrets and Environment
         run: |
+          echo "Checking for GEMINI_API_KEY..."
           if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
-            echo "::error::GEMINI_API_KEY is missing in GitHub Secrets! Please add it in Settings > Secrets > Actions."
+            echo "::error::GEMINI_API_KEY is NOT set in GitHub Secrets!"
+            echo "Please go to Settings > Secrets > Actions and add GEMINI_API_KEY."
             exit 1
+          else
+            echo "GEMINI_API_KEY is found."
           fi
 
       - name: Set up Python
@@ -50,11 +49,11 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
           echo "--- Phase 1: Scraping ---"
-          python phase1_data_acquisition/scraper.py
+          python3 phase1_data_acquisition/scraper.py
           echo "--- Phase 2: Transforming ---"
-          python phase1_data_acquisition/transform_json.py
+          python3 phase1_data_acquisition/transform_json.py
           echo "--- Phase 3: Ingesting ---"
-          python phase2_vector_store/ingest.py
+          python3 phase2_vector_store/ingest.py
           echo "--- Pipeline Successfully Completed ---"
 
       - name: Commit Updated Data

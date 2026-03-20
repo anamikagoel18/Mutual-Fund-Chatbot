@@ -72,19 +72,19 @@ class MutualFundRAG:
         aliases = {
             "hdfc large cap": "HDFC Large Cap Fund",
             "hdfc top 100": "HDFC Large Cap Fund",
-            "hdfc mid cap": "HDFC Mid-Cap Opportunities Fund",
-            "hdfc midcap": "HDFC Mid-Cap Opportunities Fund",
+            "hdfc mid cap": "HDFC Mid Cap Fund",
+            "hdfc midcap": "HDFC Mid Cap Fund",
             "hdfc small cap": "HDFC Small Cap Fund",
-            "icici large cap": "ICICI Prudential Bluechip Fund",
-            "icici bluechip": "ICICI Prudential Bluechip Fund",
+            "icici large cap": "ICICI Prudential Large Cap Fund",
+            "icici bluechip": "ICICI Prudential Large Cap Fund",
             "icici midcap": "ICICI Prudential MidCap Fund",
             "icici mid cap": "ICICI Prudential MidCap Fund",
             "icici small cap": "ICICI Prudential Smallcap Fund",
             "icici smallcap": "ICICI Prudential Smallcap Fund",
             "kotak large cap": "Kotak Large Cap Fund",
-            "kotak midcap": "Kotak Emerging Equity Fund",
-            "kotak mid cap": "Kotak Emerging Equity Fund",
-            "kotak emerging": "Kotak Emerging Equity Fund",
+            "kotak midcap": "Kotak Midcap Fund",
+            "kotak mid cap": "Kotak Midcap Fund",
+            "kotak emerging": "Kotak Midcap Fund",
             "kotak small cap": "Kotak Small Cap Fund"
         }
         
@@ -125,14 +125,9 @@ class MutualFundRAG:
         best_doc = results[0][0]
         max_score = results[0][1]
         
-        # Ensure minimum relevance
-        if max_score < self.threshold:
-            # Try a broader search if first attempt was too specific
-            results = self.vector_store.similarity_search_with_relevance_scores(user_query, k=3)
-            if not results or results[0][1] < 0.2: # Hard floor
-                return "I'm sorry, I don't have specific information for that query."
-            best_doc = results[0][0]
-            max_score = results[0][1]
+        # Ensure minimum relevance (Lowered threshold for speed and better matching)
+        if max_score < 0.35:
+            return "I'm sorry, I don't have specific information for that query."
 
         # Use ALL attributes from the single selected fund
         context = best_doc.page_content
@@ -180,9 +175,8 @@ class MutualFundRAG:
         # Ensure Source URL is present and correctly mapped
         source_phrase = f"Last updated from sources:\n{source_url}"
         
-        # Clean response if LLM added its own URL or used old format
-        import re
-        response = re.sub(r"Last updated from sources:.*", "", response, flags=re.DOTALL).strip()
+        # Simple clean up (don't over-regex)
+        response = response.strip()
         
         return f"{response}\n\n{source_phrase}"
 

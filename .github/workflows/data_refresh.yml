@@ -32,13 +32,27 @@ jobs:
       - name: Verify Secrets and Environment
         run: |
           echo "Checking for GEMINI_API_KEY..."
-          if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
-            echo "::error::GEMINI_API_KEY is NOT set in GitHub Secrets!"
-            echo "Please go to Settings > Secrets > Actions and add GEMINI_API_KEY."
+          SECRET_LEN=${#GEMINI_SECRET}
+          if [ "$SECRET_LEN" -lt 10 ]; then
+            echo "::error::GEMINI_API_KEY is too short or missing! (Length: $SECRET_LEN)"
+            echo "Current length: $SECRET_LEN"
             exit 1
           else
-            echo "GEMINI_API_KEY is found."
+            echo "✅ GEMINI_API_KEY found (Length: $SECRET_LEN characters)"
           fi
+        env:
+          GEMINI_SECRET: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Final Status Report
+        if: always()
+        run: |
+          echo "=========================================="
+          echo "           PIPELINE STATUS REPORT          "
+          echo "=========================================="
+          echo "Secrets Status: ${{ secrets.GEMINI_API_KEY != '' && 'SET' || 'MISSING' }}"
+          echo "Python Version: $(python3 --version)"
+          echo "Files in Acquisition Dir: $(ls phase1_data_acquisition/ | xargs)"
+          echo "=========================================="
 
       - name: Set up Python
         uses: actions/setup-python@v5

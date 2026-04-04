@@ -79,7 +79,7 @@
     "Fund Name": "ICICI Prudential Large Cap Fund",
     "AMC": "ICICI Mutual Fund",
     "Category": "Large-Cap",
-    "NAV": "₹111.57",
+    "NAV": "₹111.56",
     "Expense Ratio": "0.85%",
     "Benchmark": "Nifty 100 TR INR",
     "AUM": "₹77452 Cr",
@@ -91,14 +91,14 @@
     "Portfolio Turnover": "15.35%",
     "Source URL": "https://www.indmoney.com/mutual-funds/icici-prudential-large-cap-fund-direct-plan-growth-2995",
     "Riskometer": "Very High Risk",
-    "Fund Manager": "Vaibhav Dusad, Sankaran Naren, Sharmila D’mello",
+    "Fund Manager": "Sankaran Naren, Sharmila D’mello, Vaibhav Dusad",
     "Investment Objective": "To generate long-term capital appreciation by investing predominantly in equity and equity-related securities of large-cap companies benchmarked against the Nifty 100 TRI."
   },
   {
     "Fund Name": "ICICI Prudential Smallcap Fund",
     "AMC": "ICICI Mutual Fund",
     "Category": "Small-Cap",
-    "NAV": "₹86.89",
+    "NAV": "₹87.32",
     "Expense Ratio": "0.79%",
     "Benchmark": "Nifty Smallcap 250 TR INR",
     "AUM": "₹8355 Cr",
@@ -110,14 +110,14 @@
     "Portfolio Turnover": "57.37%",
     "Source URL": "https://www.indmoney.com/mutual-funds/icici-prudential-smallcap-fund-direct-plan-growth-3588",
     "Riskometer": "Very High Risk",
-    "Fund Manager": "Rajat Chandak, Gaurav Jain, Aatur Shah, Sharmila D’mello, Sakshat Goel",
+    "Fund Manager": "Gaurav Jain, Rajat Chandak, Sharmila D’mello, Sakshat Goel, Aatur Shah",
     "Investment Objective": "To generate long-term capital appreciation by investing predominantly in equity and equity-related securities of small-cap companies benchmarked against the Nifty Smallcap 250 TRI."
   },
   {
     "Fund Name": "ICICI Prudential MidCap Fund",
     "AMC": "ICICI Mutual Fund",
     "Category": "Mid-Cap",
-    "NAV": "₹330.78",
+    "NAV": "₹328.80",
     "Expense Ratio": "1.03%",
     "Benchmark": "Nifty Midcap 150 TR INR",
     "AUM": "₹7280 Cr",
@@ -129,7 +129,7 @@
     "Portfolio Turnover": "63.62%",
     "Source URL": "https://www.indmoney.com/mutual-funds/icici-prudential-midcap-fund-direct-plan-growth-3190",
     "Riskometer": "Very High Risk",
-    "Fund Manager": "Sharmila D’mello, Lalit Kumar",
+    "Fund Manager": "Lalit Kumar, Sharmila D’mello",
     "Investment Objective": "To generate long-term capital appreciation by investing predominantly in equity and equity-related securities of mid-cap companies benchmarked against the Nifty Midcap 150 TRI."
   },
   {

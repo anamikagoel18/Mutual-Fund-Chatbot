@@ -19,25 +19,6 @@
     "Investment Objective": "To generate long-term capital appreciation by investing predominantly in equity and equity-related securities of large-cap companies benchmarked against the Nifty 100 TRI."
   },
   {
-    "Fund Name": "HDFC Large Cap Fund",
-    "AMC": "HDFC Mutual Fund",
-    "Category": "N/A",
-    "NAV": "₹1236.78",
-    "Expense Ratio": "0.99%",
-    "Benchmark": "Nifty 100 TR INR",
-    "AUM": "₹37808 Cr",
-    "Inception Date": "1 January, 2013",
-    "Minimum Lumpsum": "₹100",
-    "Minimum SIP": "₹100",
-    "Exit Load": "1.0%",
-    "Lock-in Period": "No Lock-in",
-    "Portfolio Turnover": "12.76%",
-    "Source URL": "https://www.indmoney.com/mutual-funds/hdfc-large-cap-fund-direct-plan-growth-option-2989",
-    "Riskometer": "Very High Risk",
-    "Fund Manager": "Rahul Baijal, Dhruv Muchhal",
-    "Investment Objective": "To generate long-term capital appreciation by investing predominantly in large-cap companies. The fund follows the Nifty 100 TRI as its benchmark and invests primarily in well-established large-cap stocks."
-  },
-  {
     "Fund Name": "HDFC Small Cap Fund",
     "AMC": "HDFC Mutual Fund",
     "Category": "N/A",
@@ -72,7 +53,7 @@
     "Portfolio Turnover": "18.22%",
     "Source URL": "https://www.indmoney.com/mutual-funds/hdfc-mid-cap-fund-direct-plan-growth-option-3097",
     "Riskometer": "Very High Risk",
-    "Fund Manager": "Chirag Setalvad, Dhruv Muchhal",
+    "Fund Manager": "Dhruv Muchhal, Chirag Setalvad",
     "Investment Objective": "To generate long-term capital appreciation by investing predominantly in mid-cap companies. The fund follows the Nifty Midcap 150 TRI as its benchmark and invests at least 65% of its assets in mid-cap companies with strong growth potential."
   },
   {
@@ -91,7 +72,7 @@
     "Portfolio Turnover": "15.35%",
     "Source URL": "https://www.indmoney.com/mutual-funds/icici-prudential-large-cap-fund-direct-plan-growth-2995",
     "Riskometer": "Very High Risk",
-    "Fund Manager": "Sankaran Naren, Vaibhav Dusad, Sharmila D’mello",
+    "Fund Manager": "Sankaran Naren, Sharmila D’mello, Vaibhav Dusad",
     "Investment Objective": "To generate long-term capital appreciation by investing predominantly in equity and equity-related securities of large-cap companies benchmarked against the Nifty 100 TRI."
   },
   {
@@ -110,7 +91,7 @@
     "Portfolio Turnover": "57.37%",
     "Source URL": "https://www.indmoney.com/mutual-funds/icici-prudential-smallcap-fund-direct-plan-growth-3588",
     "Riskometer": "Very High Risk",
-    "Fund Manager": "Gaurav Jain, Sakshat Goel, Rajat Chandak, Aatur Shah, Sharmila D’mello",
+    "Fund Manager": "Gaurav Jain, Rajat Chandak, Aatur Shah, Sharmila D’mello, Sakshat Goel",
     "Investment Objective": "To generate long-term capital appreciation by investing predominantly in equity and equity-related securities of small-cap companies benchmarked against the Nifty Smallcap 250 TRI."
   },
   {

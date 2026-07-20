@@ -1,5 +1,24 @@
 [
   {
+    "Fund Name": "ICICI Prudential Large Cap Fund",
+    "AMC": "ICICI Mutual Fund",
+    "Category": "N/A",
+    "NAV": "₹120.56",
+    "Expense Ratio": "0.71%",
+    "Benchmark": "Nifty 100 TR INR",
+    "AUM": "₹79421 Cr",
+    "Inception Date": "1 January, 2013",
+    "Minimum Lumpsum": "₹100",
+    "Minimum SIP": "₹100",
+    "Exit Load": "1.0%",
+    "Lock-in Period": "No Lock-in",
+    "Portfolio Turnover": "15.35%",
+    "Source URL": "https://www.indmoney.com/mutual-funds/icici-prudential-large-cap-fund-direct-plan-growth-2995",
+    "Riskometer": "Very High Risk",
+    "Fund Manager": "Sankaran Naren, Vaibhav Dusad, Sharmila D’mello",
+    "Investment Objective": "To generate long-term capital appreciation by investing predominantly in equity and equity-related securities of large-cap companies benchmarked against the Nifty 100 TRI."
+  },
+  {
     "Fund Name": "ICICI Prudential MidCap Fund",
     "AMC": "ICICI Mutual Fund",
     "Category": "N/A",
@@ -17,6 +36,25 @@
     "Riskometer": "Very High Risk",
     "Fund Manager": "Lalit Kumar, Sharmila D’mello",
     "Investment Objective": "To generate long-term capital appreciation by investing predominantly in equity and equity-related securities of mid-cap companies benchmarked against the Nifty Midcap 150 TRI."
+  },
+  {
+    "Fund Name": "Kotak Midcap Fund",
+    "AMC": "Kotak Mutual Fund",
+    "Category": "N/A",
+    "NAV": "₹171.16",
+    "Expense Ratio": "0.38%",
+    "Benchmark": "Nifty Midcap 150 TR INR",
+    "AUM": "₹67611 Cr",
+    "Inception Date": "1 January, 2013",
+    "Minimum Lumpsum": "₹100",
+    "Minimum SIP": "₹100",
+    "Exit Load": "1.0%",
+    "Lock-in Period": "No Lock-in",
+    "Portfolio Turnover": "24.31%",
+    "Source URL": "https://www.indmoney.com/mutual-funds/kotak-midcap-fund-direct-growth-3945",
+    "Riskometer": "Very High Risk",
+    "Fund Manager": "Atul Bhole",
+    "Investment Objective": "To generate long-term capital appreciation by investing primarily in mid-cap companies. The fund follows the Nifty Midcap 150 TRI as its benchmark and invests at least 65% of its assets in mid-cap companies with strong growth potential."
   },
   {
     "Fund Name": "Kotak Small Cap Fund",
